@@ -37,6 +37,7 @@ class LoginScreen extends StatelessWidget {
                       height: 220,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
+                        // ignore: deprecated_member_use
                         color: AppColors.purple.withOpacity(0.15),
                       ),
                     ),
@@ -49,6 +50,7 @@ class LoginScreen extends StatelessWidget {
                       height: 140,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
+                        // ignore: deprecated_member_use
                         color: AppColors.purple.withOpacity(0.08),
                       ),
                     ),
@@ -70,6 +72,7 @@ class LoginScreen extends StatelessWidget {
                           'Welcome to Outrace',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
+                            // ignore: deprecated_member_use
                             color: Colors.white.withOpacity(0.5),
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.4,

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:notix_pro/notix_pro.dart';
-import 'package:outrace/modules/home/presentation/pages/home_screen.dart';
 import 'package:outrace/widgets/loading_screen.dart';
 
 class OtpController extends GetxController {
@@ -30,8 +29,12 @@ class OtpController extends GetxController {
 
   @override
   void onClose() {
-    for (final c in ctrls) c.dispose();
-    for (final n in nodes) n.dispose();
+    for (final c in ctrls) {
+      c.dispose();
+    }
+    for (final n in nodes) {
+      n.dispose();
+    }
     _timer?.cancel();
     super.onClose();
   }

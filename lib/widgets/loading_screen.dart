@@ -39,18 +39,13 @@ class _LoadingScreenState extends State<LoadingScreen>
   void initState() {
     super.initState();
 
-    // Fade in screen
     _fadeCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _fadeAnim = CurvedAnimation(
-      parent: _fadeCtrl,
-      curve: Curves.easeOut,
-    );
+    _fadeAnim = CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut);
     _fadeCtrl.forward();
 
-    // Progress bar fills over 15 seconds
     _progressCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 15),
@@ -61,7 +56,6 @@ class _LoadingScreenState extends State<LoadingScreen>
     );
     _progressCtrl.forward();
 
-    // Subtle GPS pulse on icon
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
@@ -71,7 +65,6 @@ class _LoadingScreenState extends State<LoadingScreen>
     );
     _pulseCtrl.repeat(reverse: true);
 
-    // Car slides left to right slowly
     _carCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3500),
@@ -81,19 +74,12 @@ class _LoadingScreenState extends State<LoadingScreen>
     );
     _carCtrl.repeat();
 
-    // Message cycle
-    _msgTimer = Timer.periodic(
-      const Duration(milliseconds: 1200),
-      (_) {
-        if (mounted) {
-          setState(
-            () => _msgIndex = (_msgIndex + 1) % _messages.length,
-          );
-        }
-      },
-    );
+    _msgTimer = Timer.periodic(const Duration(milliseconds: 1200), (_) {
+      if (mounted) {
+        setState(() => _msgIndex = (_msgIndex + 1) % _messages.length);
+      }
+    });
 
-    // Navigate after 15 seconds
     _navTimer = Timer(const Duration(seconds: 15), () {
       if (mounted) {
         Get.offAll(
@@ -134,53 +120,47 @@ class _LoadingScreenState extends State<LoadingScreen>
             Container(
               width: double.infinity,
               color: AppColors.dark,
-              padding: EdgeInsets.fromLTRB(
-                24,
-                topPad + 20,
-                24,
-                24,
-              ),
+              padding: EdgeInsets.fromLTRB(24, topPad + 16, 24, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Logo row
                   Row(
                     children: [
                       Image.asset(
                         'assets/logo/outrace_icon.png',
-                        height: 36,
-                        width: 36,
+                        height: 32,
+                        width: 32,
                       ),
                       const SizedBox(width: 10),
                       Text(
                         'Outrace',
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 18,
+                          fontSize: 17,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
                           letterSpacing: -0.3,
                         ),
                       ),
                       const Spacer(),
-                      // Live GPS indicator
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
+                          // ignore: deprecated_member_use
                           color: Colors.white.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
+                            // ignore: deprecated_member_use
                             color: Colors.white.withOpacity(0.1),
                           ),
                         ),
                         child: Row(
                           children: [
-                            // Pulsing dot
                             AnimatedBuilder(
                               animation: _pulseCtrl,
-                              builder: (_, __) => Container(
+                              builder: (_, _) => Container(
                                 width: 6,
                                 height: 6,
                                 decoration: BoxDecoration(
@@ -188,8 +168,8 @@ class _LoadingScreenState extends State<LoadingScreen>
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.green
-                                          .withOpacity(
+                                      // ignore: deprecated_member_use
+                                      color: AppColors.green.withOpacity(
                                         0.4 * _pulseAnim.value,
                                       ),
                                       blurRadius: 4,
@@ -205,6 +185,7 @@ class _LoadingScreenState extends State<LoadingScreen>
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
+                                // ignore: deprecated_member_use
                                 color: Colors.white.withOpacity(0.7),
                               ),
                             ),
@@ -213,23 +194,22 @@ class _LoadingScreenState extends State<LoadingScreen>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-
+                  const SizedBox(height: 14),
                   Text(
                     'Initialising your\ndashboard',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 26,
+                      fontSize: 22,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
                       height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 6),
-
+                  const SizedBox(height: 4),
                   Text(
                     'Please wait while we connect to your fleet',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
+                      fontSize: 12,
+                      // ignore: deprecated_member_use
                       color: Colors.white.withOpacity(0.45),
                     ),
                   ),
@@ -242,18 +222,18 @@ class _LoadingScreenState extends State<LoadingScreen>
               child: Container(
                 color: AppColors.white,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
 
                     // ── Car animation strip ─────────────
                     Container(
                       width: double.infinity,
-                      height: 100,
+                      height: 80,
                       color: AppColors.bg,
                       child: Stack(
                         children: [
-                          // Road line
                           Positioned(
-                            bottom: 22,
+                            bottom: 18,
                             left: 0,
                             right: 0,
                             child: Container(
@@ -261,39 +241,31 @@ class _LoadingScreenState extends State<LoadingScreen>
                               color: AppColors.border,
                             ),
                           ),
-
-                          // Dashed road markings
                           Positioned(
-                            bottom: 21,
+                            bottom: 17,
                             left: 0,
                             right: 0,
                             child: AnimatedBuilder(
                               animation: _carCtrl,
-                              builder: (_, __) {
-                                return CustomPaint(
-                                  painter: _DashPainter(
-                                    progress: _carAnim.value,
-                                  ),
-                                  child: const SizedBox(
-                                    height: 3,
-                                  ),
-                                );
-                              },
+                              builder: (_, _) => CustomPaint(
+                                painter: _DashPainter(
+                                  progress: _carAnim.value,
+                                ),
+                                child: const SizedBox(height: 3),
+                              ),
                             ),
                           ),
-
-                          // Car icon sliding
                           AnimatedBuilder(
                             animation: _carAnim,
-                            builder: (_, __) {
+                            builder: (_, _) {
                               final x = _carAnim.value * size.width;
                               return Positioned(
-                                left: x - 28,
-                                bottom: 16,
+                                left: x - 24,
+                                bottom: 12,
                                 child: Image.asset(
                                   'assets/icons/loading_car.png',
-                                  width: 56,
-                                  height: 56,
+                                  width: 48,
+                                  height: 48,
                                 ),
                               );
                             },
@@ -302,7 +274,7 @@ class _LoadingScreenState extends State<LoadingScreen>
                       ),
                     ),
 
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 16),
 
                     // ── Status cards row ────────────────
                     Padding(
@@ -317,16 +289,15 @@ class _LoadingScreenState extends State<LoadingScreen>
                             iconColor: AppColors.green,
                             iconBg: AppColors.greenSoft,
                           ),
-                          const SizedBox(width: 10),
-                          _StatusCard(
-                            icon: Icons.directions_car_rounded,
+                          const SizedBox(width: 8),
+                          _StatusCardWithImage(
+                            imagePath: 'assets/icons/loading_car.png',
                             label: 'Vehicles',
                             value: '3 Found',
                             valueColor: AppColors.purple,
-                            iconColor: AppColors.purple,
                             iconBg: AppColors.purpleSoft,
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8),
                           _StatusCard(
                             icon: Icons.cloud_done_rounded,
                             label: 'Server',
@@ -339,16 +310,17 @@ class _LoadingScreenState extends State<LoadingScreen>
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 14),
 
                     // ── Step list ───────────────────────
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: AnimatedBuilder(
                         animation: _progressAnim,
-                        builder: (_, __) {
+                        builder: (_, _) {
                           final p = _progressAnim.value;
                           return Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               _StepRow(
                                 label: 'GPS network connected',
@@ -384,19 +356,15 @@ class _LoadingScreenState extends State<LoadingScreen>
                         20,
                         0,
                         20,
-                        bottomPad + 24,
+                        bottomPad + 20,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Message
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 400),
                             transitionBuilder: (child, anim) =>
-                                FadeTransition(
-                              opacity: anim,
-                              child: child,
-                            ),
+                                FadeTransition(opacity: anim, child: child),
                             child: Row(
                               key: ValueKey(_msgIndex),
                               children: [
@@ -421,42 +389,34 @@ class _LoadingScreenState extends State<LoadingScreen>
                             ),
                           ),
                           const SizedBox(height: 8),
-
-                          // Progress bar
                           AnimatedBuilder(
                             animation: _progressAnim,
-                            builder: (_, __) {
-                              return Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.end,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius:
-                                        BorderRadius.circular(4),
-                                    child: LinearProgressIndicator(
-                                      value: _progressAnim.value,
-                                      backgroundColor:
-                                          AppColors.bg,
-                                      valueColor:
-                                          const AlwaysStoppedAnimation<
-                                              Color>(
-                                        AppColors.purple,
-                                      ),
-                                      minHeight: 4,
+                            builder: (_, _) => Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: LinearProgressIndicator(
+                                    value: _progressAnim.value,
+                                    backgroundColor: AppColors.bg,
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                      AppColors.purple,
                                     ),
+                                    minHeight: 4,
                                   ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    '${(_progressAnim.value * 100).toInt()}%',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 11,
-                                      color: AppColors.textTertiary,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${(_progressAnim.value * 100).toInt()}%',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    color: AppColors.textTertiary,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                ],
-                              );
-                            },
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -494,10 +454,7 @@ class _StatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 12,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
@@ -507,19 +464,82 @@ class _StatusCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 30,
-              height: 30,
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
                 color: iconBg,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: iconColor, size: 16),
+              child: Icon(icon, color: iconColor, size: 15),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               value,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: valueColor,
+              ),
+            ),
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10,
+                color: AppColors.textTertiary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusCardWithImage extends StatelessWidget {
+  final String imagePath;
+  final String label;
+  final String value;
+  final Color valueColor;
+  final Color iconBg;
+
+  const _StatusCardWithImage({
+    required this.imagePath,
+    required this.label,
+    required this.value,
+    required this.valueColor,
+    required this.iconBg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Image.asset(imagePath, fit: BoxFit.contain),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              value,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: valueColor,
               ),
@@ -553,13 +573,12 @@ class _StepRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          // Icon
           Container(
-            width: 22,
-            height: 22,
+            width: 20,
+            height: 20,
             decoration: BoxDecoration(
               color: done
                   ? AppColors.purple
@@ -577,16 +596,13 @@ class _StepRow extends StatelessWidget {
               ),
             ),
             child: done
-                ? const Icon(
-                    Icons.check_rounded,
-                    color: Colors.white,
-                    size: 13,
-                  )
+                ? const Icon(Icons.check_rounded,
+                    color: Colors.white, size: 12)
                 : active
                     ? Center(
                         child: SizedBox(
-                          width: 10,
-                          height: 10,
+                          width: 9,
+                          height: 9,
                           child: CircularProgressIndicator(
                             strokeWidth: 1.5,
                             color: AppColors.purple,
@@ -596,15 +612,12 @@ class _StepRow extends StatelessWidget {
                     : null,
           ),
           const SizedBox(width: 10),
-
-          // Label
           Text(
             label,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 13,
-              fontWeight: done || active
-                  ? FontWeight.w600
-                  : FontWeight.w400,
+              fontSize: 12,
+              fontWeight:
+                  done || active ? FontWeight.w600 : FontWeight.w400,
               color: done
                   ? AppColors.textPrimary
                   : active
@@ -612,10 +625,7 @@ class _StepRow extends StatelessWidget {
                       : AppColors.textTertiary,
             ),
           ),
-
           const Spacer(),
-
-          // Status text
           if (done)
             Text(
               'Done',

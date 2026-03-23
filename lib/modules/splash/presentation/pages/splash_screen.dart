@@ -180,9 +180,11 @@ class _SplashScreenState extends State<SplashScreen>
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
+                            // ignore: deprecated_member_use
                             color: Colors.black.withOpacity(0.4),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
+                              // ignore: deprecated_member_use
                               color: Colors.white.withOpacity(0.15),
                             ),
                           ),
@@ -256,6 +258,7 @@ class _SplashScreenState extends State<SplashScreen>
                         decoration: BoxDecoration(
                           color: i == _current
                               ? AppColors.purple
+                              // ignore: deprecated_member_use
                               : Colors.white.withOpacity(0.45),
                           borderRadius: BorderRadius.circular(3),
                         ),
