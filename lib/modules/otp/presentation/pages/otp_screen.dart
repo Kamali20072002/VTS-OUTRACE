@@ -39,6 +39,7 @@ class OtpScreen extends StatelessWidget {
                       height: 180,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
+                        // ignore: deprecated_member_use
                         color: AppColors.purple.withOpacity(0.15),
                       ),
                     ),
@@ -51,6 +52,7 @@ class OtpScreen extends StatelessWidget {
                       height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
+                        // ignore: deprecated_member_use
                         color: AppColors.purple.withOpacity(0.08),
                       ),
                     ),
@@ -69,9 +71,11 @@ class OtpScreen extends StatelessWidget {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
+                              // ignore: deprecated_member_use
                               color: Colors.white.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
+                                // ignore: deprecated_member_use
                                 color: Colors.white.withOpacity(0.1),
                               ),
                             ),
@@ -87,6 +91,7 @@ class OtpScreen extends StatelessWidget {
                           'OTP sent to',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
+                            // ignore: deprecated_member_use
                             color: Colors.white.withOpacity(0.5),
                             fontWeight: FontWeight.w600,
                           ),
@@ -208,6 +213,7 @@ class OtpScreen extends StatelessWidget {
                                   FocusScope.of(context).unfocus();
                                   Future.delayed(
                                     const Duration(milliseconds: 300),
+                                    // ignore: use_build_context_synchronously
                                     () => controller.verify(context, phone),
                                   );
                                 }
@@ -340,6 +346,7 @@ class OtpScreen extends StatelessWidget {
                       color: AppColors.greenSoft,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
+                        // ignore: deprecated_member_use
                         color: AppColors.green.withOpacity(0.25),
                       ),
                     ),

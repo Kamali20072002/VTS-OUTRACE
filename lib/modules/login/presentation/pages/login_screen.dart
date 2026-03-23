@@ -35,6 +35,7 @@ class LoginScreen extends StatelessWidget {
                       height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
+                        // ignore: deprecated_member_use
                         color: AppColors.purple.withOpacity(0.15),
                       ),
                     ),
@@ -47,6 +48,7 @@ class LoginScreen extends StatelessWidget {
                       height: 80,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
+                        // ignore: deprecated_member_use
                         color: AppColors.purple.withOpacity(0.1),
                       ),
                     ),
@@ -90,6 +92,7 @@ class LoginScreen extends StatelessWidget {
                             : 'Create your account',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
+                          // ignore: deprecated_member_use
                           color: Colors.white.withOpacity(0.5),
                         ),
                       )),
@@ -100,6 +103,7 @@ class LoginScreen extends StatelessWidget {
                       Obx(() => Container(
                         height: 42,
                         decoration: BoxDecoration(
+                          // ignore: deprecated_member_use
                           color: Colors.white.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -170,6 +174,7 @@ class _TabBtn extends StatelessWidget {
                 fontWeight: FontWeight.w700,
                 color: isActive
                     ? Colors.white
+                    // ignore: deprecated_member_use
                     : Colors.white.withOpacity(0.5),
               ),
             ),
@@ -423,6 +428,7 @@ class _MethodBtn extends StatelessWidget {
             boxShadow: isActive
                 ? [
                     BoxShadow(
+                      // ignore: deprecated_member_use
                       color: AppColors.purple.withOpacity(0.25),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
@@ -438,6 +444,7 @@ class _MethodBtn extends StatelessWidget {
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
                   color: isActive
+                      // ignore: deprecated_member_use
                       ? Colors.white.withOpacity(0.2)
                       : AppColors.bg,
                   borderRadius: BorderRadius.circular(7),

@@ -35,8 +35,12 @@ class OtpController extends GetxController {
 
   @override
   void onClose() {
-    for (final c in ctrls) c.dispose();
-    for (final n in nodes) n.dispose();
+    for (final c in ctrls) {
+      c.dispose();
+    }
+    for (final n in nodes) {
+      n.dispose();
+    }
     _timer?.cancel();
     super.onClose();
   }
@@ -88,6 +92,7 @@ class OtpController extends GetxController {
 
       if (response.error) {
         NotixToast.show(
+          // ignore: use_build_context_synchronously
           context,
           type: NotixType.error,
           title: 'Invalid OTP',
@@ -113,6 +118,7 @@ class OtpController extends GetxController {
       }
 
       NotixToast.show(
+        // ignore: use_build_context_synchronously
         context,
         type: NotixType.success,
         title: 'Verified!',
@@ -128,6 +134,7 @@ class OtpController extends GetxController {
       );
     } on HttpException catch (e) {
       NotixToast.show(
+        // ignore: use_build_context_synchronously
         context,
         type: NotixType.error,
         title: 'Error ${e.statusCode}',
@@ -136,6 +143,7 @@ class OtpController extends GetxController {
       );
     } catch (e) {
       NotixToast.show(
+        // ignore: use_build_context_synchronously
         context,
         type: NotixType.error,
         title: 'Error',
@@ -152,6 +160,7 @@ class OtpController extends GetxController {
     try {
       final response = await _repo.sendOtp(email);
       NotixToast.show(
+        // ignore: use_build_context_synchronously
         context,
         type: NotixType.success,
         title: 'OTP Resent',
@@ -161,6 +170,7 @@ class OtpController extends GetxController {
       startTimer();
     } on HttpException catch (e) {
       NotixToast.show(
+        // ignore: use_build_context_synchronously
         context,
         type: NotixType.error,
         title: 'Error',
@@ -169,6 +179,7 @@ class OtpController extends GetxController {
       );
     } catch (e) {
       NotixToast.show(
+        // ignore: use_build_context_synchronously
         context,
         type: NotixType.error,
         title: 'Error',
