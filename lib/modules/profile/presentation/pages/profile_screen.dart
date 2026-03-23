@@ -184,12 +184,15 @@ class ProfileScreen extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 8),
+                
+
                 _MenuItem(
                   icon: Icons.logout_rounded,
                   iconBg: AppColors.redSoft,
                   iconColor: AppColors.red,
                   label: 'Logout',
                   isDestructive: true,
+                  onTap: () => controller.logout(context),
                 ),
               ],
             ),
@@ -259,6 +262,8 @@ class _MenuItem extends StatelessWidget {
   final String label;
   final String? trailing;
   final bool isDestructive;
+  final VoidCallback? onTap;   // add this
+
 
   const _MenuItem({
     required this.icon,
@@ -267,77 +272,83 @@ class _MenuItem extends StatelessWidget {
     required this.label,
     this.trailing,
     this.isDestructive = false,
+    this.onTap,   // add this
+
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 13,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, size: 18, color: iconColor),
-          ),
-          const SizedBox(width: 12),
+    return GestureDetector(
+      onTap: onTap,
 
-          Expanded(
-            child: Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isDestructive
-                    ? AppColors.red
-                    : AppColors.textPrimary,
-              ),
-            ),
-          ),
-
-          if (trailing != null) ...[
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 13,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 3,
-              ),
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: AppColors.purpleSoft,
+                color: iconBg,
                 borderRadius: BorderRadius.circular(10),
               ),
+              child: Icon(icon, size: 18, color: iconColor),
+            ),
+            const SizedBox(width: 12),
+      
+            Expanded(
               child: Text(
-                trailing!,
+                label,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.purple,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDestructive
+                      ? AppColors.red
+                      : AppColors.textPrimary,
                 ),
               ),
             ),
-            const SizedBox(width: 6),
+      
+            if (trailing != null) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.purpleSoft,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  trailing!,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.purple,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
+      
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 13,
+              color: isDestructive
+                  ? AppColors.red
+                  : AppColors.textTertiary,
+            ),
           ],
-
-          Icon(
-            Icons.arrow_forward_ios_rounded,
-            size: 13,
-            color: isDestructive
-                ? AppColors.red
-                : AppColors.textTertiary,
-          ),
-        ],
+        ),
       ),
     );
   }

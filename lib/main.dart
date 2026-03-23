@@ -3,21 +3,39 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'theme/app_theme.dart';
 import 'modules/splash/presentation/pages/splash_screen.dart';
+import 'modules/home/presentation/pages/home_screen.dart';
+import 'core/utils/token_storage.dart';
 
-void main() {
+void main() async {
+  // 1. Ensure Flutter framework is initialized
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // 2. Set preferred system UI styles
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
     ),
   );
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  runApp(const OutraceApp());
+  
+  // 3. Await orientation lock
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  
+  // 4. Determine initial landing page based on session
+  bool isLoggedIn = false;
+  try {
+    isLoggedIn = await TokenStorage.isLoggedIn();
+  } catch (e) {
+    debugPrint('Error checking session: $e');
+  }
+  
+  runApp(OutraceApp(isLoggedIn: isLoggedIn));
 }
 
 class OutraceApp extends StatelessWidget {
-  const OutraceApp({super.key});
+  final bool isLoggedIn;
+  
+  const OutraceApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +43,8 @@ class OutraceApp extends StatelessWidget {
       title: 'Outrace',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
-      home: const SplashScreen(),
+      // If session exists, bypass Splash/Onboarding and go directly to Home
+      home: isLoggedIn ? const HomeScreen() : const SplashScreen(),
     );
   }
 }

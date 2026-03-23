@@ -39,7 +39,6 @@ class OtpScreen extends StatelessWidget {
                       height: 180,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        // ignore: deprecated_member_use
                         color: AppColors.purple.withOpacity(0.15),
                       ),
                     ),
@@ -52,7 +51,6 @@ class OtpScreen extends StatelessWidget {
                       height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        // ignore: deprecated_member_use
                         color: AppColors.purple.withOpacity(0.08),
                       ),
                     ),
@@ -71,11 +69,9 @@ class OtpScreen extends StatelessWidget {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              // ignore: deprecated_member_use
                               color: Colors.white.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                // ignore: deprecated_member_use
                                 color: Colors.white.withOpacity(0.1),
                               ),
                             ),
@@ -88,19 +84,27 @@ class OtpScreen extends StatelessWidget {
                         ),
                         const Spacer(),
                         Text(
-                          'OTP sent to $phone',
+                          'OTP sent to',
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            // ignore: deprecated_member_use
                             color: Colors.white.withOpacity(0.5),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 2),
                         Text(
-                          'Verify your\nnumber',
+                          phone,
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 30,
+                            fontSize: 14,
+                            color: AppColors.purpleLight,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Verify your\naccount',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 28,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
                             height: 1.15,
@@ -120,7 +124,7 @@ class OtpScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
 
-                  // Timer instruction
+                  // Timer
                   Obx(() => RichText(
                     text: TextSpan(
                       style: GoogleFonts.plusJakartaSans(
@@ -129,8 +133,7 @@ class OtpScreen extends StatelessWidget {
                         height: 1.5,
                       ),
                       children: [
-                        const TextSpan(
-                            text: 'Enter the 4-digit code. Expires in '),
+                        const TextSpan(text: 'Enter the 4-digit code. Expires in '),
                         TextSpan(
                           text: controller.timerText,
                           style: GoogleFonts.plusJakartaSans(
@@ -159,8 +162,7 @@ class OtpScreen extends StatelessWidget {
                   GetBuilder<OtpController>(
                     builder: (_) => Row(
                       children: List.generate(4, (i) {
-                        final isFilled =
-                            controller.ctrls[i].text.isNotEmpty;
+                        final isFilled = controller.ctrls[i].text.isNotEmpty;
                         final isFocused = controller.nodes[i].hasFocus;
 
                         return Expanded(
@@ -199,8 +201,17 @@ class OtpScreen extends StatelessWidget {
                                 border: InputBorder.none,
                                 counterText: '',
                               ),
-                              onChanged: (v) =>
-                                  controller.onDigitChanged(i, v),
+                              onChanged: (v) {
+                                controller.onDigitChanged(i, v);
+                                // Auto submit when all 4 digits entered
+                                if (controller.otp.value.length == 4) {
+                                  FocusScope.of(context).unfocus();
+                                  Future.delayed(
+                                    const Duration(milliseconds: 300),
+                                    () => controller.verify(context, phone),
+                                  );
+                                }
+                              },
                             ),
                           ),
                         );
@@ -222,7 +233,7 @@ class OtpScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: controller.canResend.value
-                            ? controller.startTimer
+                            ? () => controller.resendOtp(context, phone)
                             : null,
                         child: Text(
                           controller.canResend.value
@@ -241,12 +252,14 @@ class OtpScreen extends StatelessWidget {
                   )),
                   const SizedBox(height: 32),
 
-                  // Verify button
+                  // Verify button — shows loading when auto submitting
                   Obx(() => SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-onPressed: () => controller.verify(context),
+                      onPressed: controller.isLoading.value
+                          ? null
+                          : () => controller.verify(context, phone),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: controller.otp.value.length == 4
                             ? AppColors.purple
@@ -257,30 +270,39 @@ onPressed: () => controller.verify(context),
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.check_circle_outline_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Verify & Continue',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                      child: controller.isLoading.value
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.check_circle_outline_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Verify & Continue',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
                     ),
                   )),
                   const SizedBox(height: 12),
 
-                  // Change number
+                  // Change email
                   SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -296,7 +318,7 @@ onPressed: () => controller.verify(context),
                         ),
                       ),
                       child: Text(
-                        'Change Mobile Number',
+                        'Change Email',
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -318,7 +340,6 @@ onPressed: () => controller.verify(context),
                       color: AppColors.greenSoft,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        // ignore: deprecated_member_use
                         color: AppColors.green.withOpacity(0.25),
                       ),
                     ),
