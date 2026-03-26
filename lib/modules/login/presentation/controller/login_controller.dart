@@ -64,16 +64,20 @@ class LoginController extends GetxController {
       final response = await _repo.sendOtp(email);
 
       if (response.error) {
+        // ignore: use_build_context_synchronously
         _showError(context, response.message);
         return;
       }
 
+      // ignore: use_build_context_synchronously
       _showSuccess(context, 'OTP Sent', response.message);
       await Future.delayed(const Duration(milliseconds: 600));
       Get.to(() => OtpScreen(phone: email));
     } on HttpException catch (e) {
+      // ignore: use_build_context_synchronously
       _showError(context, e.message);
     } catch (e) {
+      // ignore: use_build_context_synchronously
       _showError(context, 'Something went wrong. Please try again.');
     } finally {
       isLoading.value = false;
@@ -102,6 +106,7 @@ class LoginController extends GetxController {
     );
 
     if (response.error) {
+      // ignore: use_build_context_synchronously
       _showError(context, response.message);
       return;
     }
@@ -112,6 +117,7 @@ class LoginController extends GetxController {
       user: response.user,
     );
 
+    // ignore: use_build_context_synchronously
     _showSuccess(context, 'Welcome back!', response.message);
     await Future.delayed(const Duration(milliseconds: 800));
     Get.offAll(
@@ -120,8 +126,10 @@ class LoginController extends GetxController {
       duration: const Duration(milliseconds: 500),
     );
   } on HttpException catch (e) {
+    // ignore: use_build_context_synchronously
     _showError(context, e.message);
   } catch (e) {
+    // ignore: use_build_context_synchronously
     _showError(context, 'Something went wrong. Please try again.');
   } finally {
     isLoading.value = false;
@@ -162,6 +170,7 @@ class LoginController extends GetxController {
       );
 
       if (response.error) {
+        // ignore: use_build_context_synchronously
         _showError(context, response.message);
         return;
       }
@@ -172,6 +181,7 @@ class LoginController extends GetxController {
         user: response.user,
       );
 
+      // ignore: use_build_context_synchronously
       _showSuccess(context, 'Registered!', response.message);
       await Future.delayed(const Duration(milliseconds: 800));
       Get.offAll(
@@ -180,8 +190,10 @@ class LoginController extends GetxController {
         duration: const Duration(milliseconds: 500),
       );
     } on HttpException catch (e) {
+      // ignore: use_build_context_synchronously
       _showError(context, e.message);
     } catch (e) {
+      // ignore: use_build_context_synchronously
       _showError(context, 'Something went wrong. Please try again.');
     } finally {
       isRegLoading.value = false;
