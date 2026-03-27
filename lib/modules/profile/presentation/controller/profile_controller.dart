@@ -108,9 +108,15 @@ class ProfileController extends GetxController {
       }
     } on HttpException catch (e) {
       debugPrint('Profile Error: ${e.message}');
+      if (Get.context != null) {
+        _showError(Get.context!, e.message);
+      }
       await _loadFromLocal();
     } catch (e) {
       debugPrint('Profile Error: $e');
+      if (Get.context != null) {
+        _showError(Get.context!, 'Failed to load profile');
+      }
       await _loadFromLocal();
     } finally {
       isLoading.value = false;
@@ -132,6 +138,9 @@ class ProfileController extends GetxController {
       myDevices.value = list;
     } catch (e) {
       debugPrint('Devices Error: $e');
+      if (Get.context != null) {
+        _showError(Get.context!, 'Failed to load devices');
+      }
     } finally {
       isLoadingDevices.value = false;
     }

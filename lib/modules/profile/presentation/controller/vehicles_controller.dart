@@ -225,6 +225,9 @@ class VehiclesController extends GetxController {
       _centerToFirstVehicle();
     } catch (e) {
       debugPrint('Load Vehicles Error: $e');
+      if (Get.context != null) {
+        _showError(Get.context!, 'Failed to load vehicles');
+      }
     } finally {
       isLoading.value = false;
     }
@@ -239,6 +242,9 @@ class VehiclesController extends GetxController {
       }
     } catch (e) {
       debugPrint('Load Vehicle Types Error: $e');
+      if (Get.context != null) {
+        _showError(Get.context!, 'Failed to load vehicle types');
+      }
     }
   }
 
@@ -249,6 +255,9 @@ class VehiclesController extends GetxController {
       availableDevices.value = list;
     } catch (e) {
       debugPrint('Load Unassigned Devices Error: $e');
+      if (Get.context != null) {
+        _showError(Get.context!, 'Failed to load devices');
+      }
     } finally {
       isLoadingDevices.value = false;
     }
