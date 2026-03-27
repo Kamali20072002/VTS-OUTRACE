@@ -2,8 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import '../theme/app_theme.dart';
 import '../modules/home/presentation/pages/home_screen.dart';
+import '../modules/home/presentation/controller/home_controller.dart';
+import '../modules/profile/presentation/controller/profile_controller.dart';
+import '../modules/trips/presentation/controller/trips_controller.dart';
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
@@ -24,15 +28,14 @@ class _LoadingScreenState extends State<LoadingScreen>
   late Animation<double> _pulseAnim;
   late Animation<double> _carAnim;
 
-  Timer? _navTimer;
-  Timer? _msgTimer;
+  bool _isOnline = false;
 
   int _msgIndex = 0;
   final List<String> _messages = [
     'Connecting to GPS network...',
     'Loading vehicle data...',
     'Syncing fleet locations...',
-    'Almost ready...',
+    'Initialising dashboard...',
   ];
 
   @override
@@ -48,13 +51,12 @@ class _LoadingScreenState extends State<LoadingScreen>
 
     _progressCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 15),
+      duration: const Duration(milliseconds: 2000),
     );
     _progressAnim = CurvedAnimation(
       parent: _progressCtrl,
       curve: Curves.easeInOut,
     );
-    _progressCtrl.forward();
 
     _pulseCtrl = AnimationController(
       vsync: this,
@@ -74,21 +76,85 @@ class _LoadingScreenState extends State<LoadingScreen>
     );
     _carCtrl.repeat();
 
-    _msgTimer = Timer.periodic(const Duration(milliseconds: 1200), (_) {
-      if (mounted) {
-        setState(() => _msgIndex = (_msgIndex + 1) % _messages.length);
-      }
-    });
+    _startLoadingProcess();
+  }
 
-    _navTimer = Timer(const Duration(seconds: 15), () {
+  Future<void> _startLoadingProcess() async {
+    try {
+      // 1. Check Internet
+      if (mounted) setState(() => _msgIndex = 0);
+      await _progressCtrl.animateTo(0.15);
+      
+      final hasInternet = await _checkInternet();
+      if (mounted) setState(() => _isOnline = hasInternet);
+      
+      if (!hasInternet) {
+        _handleError('No internet connection found');
+        return;
+      }
+      await _progressCtrl.animateTo(0.3);
+
+      // 2. Load Vehicle Data
+      if (mounted) setState(() => _msgIndex = 1);
+      final homeCtrl = Get.put(HomeController());
+      await homeCtrl.loadActiveVehicles();
+      await _progressCtrl.animateTo(0.5);
+
+      // 3. Sync Fleet Locations & Trips
+      if (mounted) setState(() => _msgIndex = 2);
+      final tripsCtrl = Get.put(TripsController());
+      await tripsCtrl.fetchTrips();
+      await _progressCtrl.animateTo(0.75);
+
+      // 4. Initialise Dashboard
+      if (mounted) setState(() => _msgIndex = 3);
+      final profileCtrl = Get.put(ProfileController());
+      await profileCtrl.refreshProfile();
+      await _progressCtrl.animateTo(1.0);
+
+      // Success - Navigate
       if (mounted) {
+        await Future.delayed(const Duration(milliseconds: 500));
         Get.offAll(
           () => const HomeScreen(),
           transition: Transition.fadeIn,
           duration: const Duration(milliseconds: 500),
         );
       }
-    });
+    } catch (e) {
+      _handleError('Initialization failed: $e');
+    }
+  }
+
+  Future<bool> _checkInternet() async {
+    try {
+      // Simple head request to check connectivity
+      final response = await http
+          .head(Uri.parse('https://www.google.com'))
+          .timeout(const Duration(seconds: 5));
+      return response.statusCode >= 200 && response.statusCode < 400;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _handleError(String message) {
+    if (!mounted) return;
+    Get.snackbar(
+      'Connection Error',
+      message,
+      backgroundColor: Colors.red.withOpacity(0.8),
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 5),
+      mainButton: TextButton(
+        onPressed: () {
+          Get.closeCurrentSnackbar();
+          _startLoadingProcess();
+        },
+        child: const Text('Retry', style: TextStyle(color: Colors.white)),
+      ),
+    );
   }
 
   @override
@@ -97,8 +163,6 @@ class _LoadingScreenState extends State<LoadingScreen>
     _fadeCtrl.dispose();
     _pulseCtrl.dispose();
     _carCtrl.dispose();
-    _navTimer?.cancel();
-    _msgTimer?.cancel();
     super.dispose();
   }
 
@@ -284,27 +348,31 @@ class _LoadingScreenState extends State<LoadingScreen>
                           _StatusCard(
                             icon: Icons.location_on_rounded,
                             label: 'GPS Signal',
-                            value: 'Strong',
-                            valueColor: AppColors.green,
-                            iconColor: AppColors.green,
-                            iconBg: AppColors.greenSoft,
+                            value: _isOnline ? 'Strong' : 'None',
+                            valueColor: _isOnline ? AppColors.green : AppColors.red,
+                            iconColor: _isOnline ? AppColors.green : AppColors.red,
+                            iconBg: _isOnline ? AppColors.greenSoft : AppColors.red.withOpacity(0.1),
                           ),
                           const SizedBox(width: 8),
-                          _StatusCardWithImage(
-                            imagePath: 'assets/icons/loading_car.png',
-                            label: 'Vehicles',
-                            value: '3 Found',
-                            valueColor: AppColors.purple,
-                            iconBg: AppColors.purpleSoft,
-                          ),
+                          Obx(() {
+                            final homeCtrl = Get.find<HomeController>();
+                            final count = homeCtrl.vehicles.length;
+                            return _StatusCardWithImage(
+                              imagePath: 'assets/icons/loading_car.png',
+                              label: 'Vehicles',
+                              value: '$count Found',
+                              valueColor: AppColors.purple,
+                              iconBg: AppColors.purpleSoft,
+                            );
+                          }),
                           const SizedBox(width: 8),
                           _StatusCard(
                             icon: Icons.cloud_done_rounded,
                             label: 'Server',
-                            value: 'Connected',
-                            valueColor: AppColors.green,
-                            iconColor: AppColors.green,
-                            iconBg: AppColors.greenSoft,
+                            value: _isOnline ? 'Connected' : 'Offline',
+                            valueColor: _isOnline ? AppColors.green : AppColors.red,
+                            iconColor: _isOnline ? AppColors.green : AppColors.red,
+                            iconBg: _isOnline ? AppColors.greenSoft : AppColors.red.withOpacity(0.1),
                           ),
                         ],
                       ),
@@ -324,23 +392,23 @@ class _LoadingScreenState extends State<LoadingScreen>
                             children: [
                               _StepRow(
                                 label: 'GPS network connected',
-                                done: p > 0.1,
-                                active: p <= 0.1,
+                                done: p > 0.25,
+                                active: p <= 0.25,
                               ),
                               _StepRow(
                                 label: 'Vehicle data loaded',
-                                done: p > 0.35,
-                                active: p > 0.1 && p <= 0.35,
+                                done: p > 0.45,
+                                active: p > 0.25 && p <= 0.45,
                               ),
                               _StepRow(
                                 label: 'Fleet locations synced',
-                                done: p > 0.65,
-                                active: p > 0.35 && p <= 0.65,
+                                done: p > 0.7,
+                                active: p > 0.45 && p <= 0.7,
                               ),
                               _StepRow(
                                 label: 'Dashboard ready',
-                                done: p > 0.90,
-                                active: p > 0.65 && p <= 0.90,
+                                done: p > 0.95,
+                                active: p > 0.7 && p <= 0.95,
                               ),
                             ],
                           );

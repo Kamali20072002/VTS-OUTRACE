@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:outrace/modules/profile/presentation/pages/notifications_screen.dart';
+import 'package:outrace/modules/home/presentation/controller/home_controller.dart';
 import '../../../../theme/app_theme.dart';
 import '../controller/profile_controller.dart';
 import 'vehicles_screen.dart';
@@ -12,9 +14,11 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(ProfileController());
+    final homeController = Get.find<HomeController>();
     final topPad = MediaQuery.of(context).padding.top;
 
     return SingleChildScrollView(
+      controller: homeController.profileScrollController,
       padding: const EdgeInsets.only(bottom: 100),
       child: Column(
         children: [
@@ -151,7 +155,11 @@ class ProfileScreen extends StatelessWidget {
                   iconBg: AppColors.purpleSoft,
                   iconColor: AppColors.purple,
                   label: 'Trip History',
-                  onTap: () {},
+                  onTap: () {
+                    if (Get.isRegistered<HomeController>()) {
+                      Get.find<HomeController>().changeTab(2);
+                    }
+                  },
                 ),
                 _MenuItem(
                   icon: Icons.notifications_outlined,
@@ -159,7 +167,7 @@ class ProfileScreen extends StatelessWidget {
                   iconColor: AppColors.amber,
                   label: 'Notifications',
                   trailingObs: controller.notificationCount,
-                  onTap: () {},
+                  onTap: () => Get.to(() => const NotificationsScreen()),
                 ),
 
                 const SizedBox(height: 8),
@@ -534,6 +542,7 @@ class ProfileScreen extends StatelessWidget {
               title: 'Live Chat',
               subtitle: 'Chat with our support team',
               onTap: () {},
+              isComingSoon: true,
             ),
             _HelpItem(
               icon: Icons.email_outlined,
@@ -558,6 +567,7 @@ class ProfileScreen extends StatelessWidget {
               title: 'Report a Bug',
               subtitle: 'Help us improve the app',
               onTap: () {},
+              isComingSoon: true,
             ),
             const SizedBox(height: 12),
             Container(
@@ -829,18 +839,20 @@ class _HelpItem extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final bool isComingSoon;
 
   const _HelpItem({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.isComingSoon = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isComingSoon ? null : onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
@@ -859,20 +871,42 @@ class _HelpItem extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon,
-                  color: AppColors.textSecondary, size: 20),
+                  color: isComingSoon ? AppColors.textTertiary : AppColors.textSecondary, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: isComingSoon ? AppColors.textTertiary : AppColors.textPrimary,
+                        ),
+                      ),
+                      if (isComingSoon) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.bg,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'Coming Soon',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textTertiary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   Text(
                     subtitle,
@@ -884,8 +918,8 @@ class _HelpItem extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded,
-                size: 13, color: AppColors.textTertiary),
+            Icon(Icons.arrow_forward_ios_rounded,
+                size: 13, color: isComingSoon ? AppColors.textTertiary.withOpacity(0.3) : AppColors.textTertiary),
           ],
         ),
       ),
@@ -967,6 +1001,7 @@ class _MenuItem extends StatelessWidget {
   final bool isDestructive;
   final VoidCallback? onTap;
   final String? customIconAsset;
+  final bool isComingSoon;
 
   const _MenuItem({
     required this.icon,
@@ -978,12 +1013,13 @@ class _MenuItem extends StatelessWidget {
     this.isDestructive = false,
     this.onTap,
     this.customIconAsset,
+    this.isComingSoon = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isComingSoon ? null : onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
@@ -1010,20 +1046,49 @@ class _MenuItem extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                label,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isDestructive
-                      ? AppColors.red
-                      : AppColors.textPrimary,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        label,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDestructive
+                              ? AppColors.red
+                              : isComingSoon
+                                  ? AppColors.textTertiary
+                                  : AppColors.textPrimary,
+                        ),
+                      ),
+                      if (isComingSoon) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.bg,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'Coming Soon',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textTertiary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
               ),
             ),
 
             // Static trailing
-            if (trailing != null) ...[
+            if (trailing != null && !isComingSoon) ...[
               Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 8, vertical: 3),
@@ -1044,7 +1109,7 @@ class _MenuItem extends StatelessWidget {
             ],
 
             // Reactive trailing from API
-            if (trailingObs != null) ...[
+            if (trailingObs != null && !isComingSoon) ...[
               Obx(() => trailingObs!.value > 0
                   ? Container(
                       padding: const EdgeInsets.symmetric(

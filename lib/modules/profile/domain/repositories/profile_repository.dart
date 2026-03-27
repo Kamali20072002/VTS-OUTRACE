@@ -1,4 +1,5 @@
 import '../models/profile_model.dart';
+import '../models/notification_model.dart';
 import '../../data/api/profile_api.dart';
 
 class ProfileRepository {
@@ -77,5 +78,13 @@ class ProfileRepository {
       oldPassword: oldPassword,
       newPassword: newPassword,
     );
+  }
+
+  Future<List<NotificationModel>> getMyAlerts() async {
+    final json = await _api.getMyAlerts();
+    final data = json['data'] as List<dynamic>? ?? [];
+    return data
+        .map((n) => NotificationModel.fromJson(n as Map<String, dynamic>))
+        .toList();
   }
 }

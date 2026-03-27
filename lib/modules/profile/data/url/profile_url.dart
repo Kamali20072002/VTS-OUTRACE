@@ -9,5 +9,6 @@ class ProfileUrl {
   static final String addVehicle        = '${AppConfig.baseUrl}/vehicles/register';
   static final String vehicleTypes      = '${AppConfig.baseUrl}/vehicles/types';
   static final String unassignedDevices = '${AppConfig.baseUrl}/devices/unassigned/active';
+  static final String myAlerts         = '${AppConfig.baseUrl}/alerts/my';
   static String vehicleDetails(String id) => '${AppConfig.baseUrl}/vehicles/$id';
 }

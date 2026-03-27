@@ -59,25 +59,12 @@ class ProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadProfile();
+    refreshProfile();
     loadMyDevices();
   }
 
-  @override
-  void onClose() {
-    nameEditCtrl.dispose();
-    phoneEditCtrl.dispose();
-    oldPassCtrl.dispose();
-    newPassCtrl.dispose();
-    confPassCtrl.dispose();
-    regNoCtrl.dispose();
-    vModelCtrl.dispose();
-    imeiCtrl.dispose();
-    super.onClose();
-  }
-
   // ── Load profile ───────────────────────────
-  Future<void> _loadProfile() async {
+  Future<void> refreshProfile() async {
     isLoading.value = true;
     try {
       final json = await _repo.getProfile();

@@ -3,12 +3,19 @@ import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:notix_pro/notix_pro.dart';
 import '../../../../widgets/map_marker_helper.dart';
+import '../../../profile/presentation/controller/profile_controller.dart';
+import '../../../trips/presentation/controller/trips_controller.dart';
 import '../../../track/domain/models/active_vehicle_model.dart';
 import '../../../track/domain/repositories/track_repository.dart';
 
 class HomeController extends GetxController {
   final TrackRepository _repo = TrackRepository();
   final RxInt currentIndex = 0.obs;
+
+  // ── Scroll Controllers ────────────────────────
+  final ScrollController homeScrollController = ScrollController();
+  final ScrollController tripsScrollController = ScrollController();
+  final ScrollController profileScrollController = ScrollController();
 
   // ── Map ─────────────────────────────────────
   GoogleMapController? homeMapController;
@@ -184,7 +191,34 @@ class HomeController extends GetxController {
   int get offlineVehicles =>
       vehicles.where((v) => !v.isOnline).length;
 
-  void changeTab(int index) => currentIndex.value = index;
+  void changeTab(int index) {
+    currentIndex.value = index;
+    // Trigger refresh and scroll reset for the target tab
+    switch (index) {
+      case 0:
+        if (homeScrollController.hasClients) {
+          homeScrollController.jumpTo(0.0);
+        }
+        loadActiveVehicles();
+        break;
+      case 2:
+        if (tripsScrollController.hasClients) {
+          tripsScrollController.jumpTo(0.0);
+        }
+        if (Get.isRegistered<TripsController>()) {
+          Get.find<TripsController>().fetchTrips();
+        }
+        break;
+      case 3:
+        if (profileScrollController.hasClients) {
+          profileScrollController.jumpTo(0.0);
+        }
+        if (Get.isRegistered<ProfileController>()) {
+          Get.find<ProfileController>().refreshProfile();
+        }
+        break;
+    }
+  }
 
   String getVehicleImage(ActiveVehicleModel vehicle, int listIndex) {
     final typeStr = vehicle.type.toLowerCase();
@@ -205,6 +239,9 @@ class HomeController extends GetxController {
   @override
   void onClose() {
     homeMapController?.dispose();
+    homeScrollController.dispose();
+    tripsScrollController.dispose();
+    profileScrollController.dispose();
     super.onClose();
   }
 }

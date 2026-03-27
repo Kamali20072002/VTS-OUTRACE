@@ -255,4 +255,24 @@ class ProfileApiCalls {
       throw HttpException(500, 'An unexpected error occurred.');
     }
   }
+
+  Future<Map<String, dynamic>> getMyAlerts() async {
+    try {
+      final headers = await NetworkUtils.authHeaders();
+      final response = await http
+          .get(Uri.parse(ProfileUrl.myAlerts), headers: headers)
+          .timeout(const Duration(seconds: 60),
+              onTimeout: () =>
+                  throw TimeoutException(408, 'Request timed out.'));
+      return NetworkUtils.handleResponse(response);
+    } on TimeoutException {
+      throw HttpException(408, 'Request timed out.');
+    } on http.ClientException {
+      throw HttpException(503, 'Error:connect ECONNREFUSED 172.235.29.67:4000');
+    } on HttpException {
+      rethrow;
+    } catch (e) {
+      throw HttpException(500, 'An unexpected error occurred.');
+    }
+  }
 }

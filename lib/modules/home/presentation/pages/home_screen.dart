@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:outrace/modules/profile/presentation/pages/notifications_screen.dart';
 import 'package:outrace/modules/profile/presentation/pages/profile_screen.dart';
 import 'package:outrace/modules/profile/presentation/pages/vehicles_screen.dart';
 import 'package:outrace/modules/profile/presentation/pages/vehicle_details_screen.dart';
@@ -65,6 +66,7 @@ class _HomePage extends StatelessWidget {
       displacement: topPad + 20,
       color: AppColors.purple,
       child: SingleChildScrollView(
+        controller: controller.homeScrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.only(bottom: 100),
         child: Column(
@@ -123,34 +125,37 @@ class _HomePage extends StatelessWidget {
                 Row(
                   children: [
                     // Notification
-                    Stack(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.bg,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.notifications_outlined,
-                            color: AppColors.textPrimary,
-                            size: 20,
-                          ),
-                        ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: AppColors.red,
-                              shape: BoxShape.circle,
+                    GestureDetector(
+                      onTap: () => Get.to(() => const NotificationsScreen()),
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.bg,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.notifications_outlined,
+                              color: AppColors.textPrimary,
+                              size: 20,
                             ),
                           ),
-                        ),
-                      ],
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: AppColors.red,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(width: 8),
                     // Avatar
