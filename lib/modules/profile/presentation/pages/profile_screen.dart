@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:outrace/modules/profile/presentation/pages/notifications_screen.dart';
 import 'package:outrace/modules/home/presentation/controller/home_controller.dart';
 import '../../../../theme/app_theme.dart';
@@ -45,18 +46,37 @@ class ProfileScreen extends StatelessWidget {
                 Column(
                   children: [
                     // Avatar
-                    Container(
+                    Obx(() => Container(
                       width: 76,
                       height: 76,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                            color: AppColors.purple, width: 2.5),
+                            color: controller.isLoading.value ? Colors.transparent : AppColors.purple, width: 2.5),
                         color: AppColors.dark2,
                       ),
-                      child: const Icon(Icons.person_rounded,
-                          color: Colors.white, size: 36),
-                    ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          if (controller.isLoading.value)
+                            SizedBox.expand(
+                              child: Shimmer.fromColors(
+                                baseColor: AppColors.purple.withOpacity(0.12),
+                                highlightColor: AppColors.purple,
+                                period: const Duration(milliseconds: 1500),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 2.5),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          const Icon(Icons.person_rounded,
+                              color: Colors.white, size: 36),
+                        ],
+                      ),
+                    )),
                     const SizedBox(height: 12),
 
                     Obx(() => controller.isLoading.value
@@ -150,51 +170,56 @@ class ProfileScreen extends StatelessWidget {
 
                 // ── Activity section ─────────────────
                 _SectionLabel(label: 'Activity'),
-                _MenuItem(
+                Obx(() => _MenuItem(
                   icon: Icons.history_rounded,
                   iconBg: AppColors.purpleSoft,
                   iconColor: AppColors.purple,
                   label: 'Trip History',
+                  isLoading: controller.isLoading.value,
                   onTap: () {
                     if (Get.isRegistered<HomeController>()) {
                       Get.find<HomeController>().changeTab(2);
                     }
                   },
-                ),
-                _MenuItem(
+                )),
+                Obx(() => _MenuItem(
                   icon: Icons.notifications_outlined,
                   iconBg: const Color(0xFFFFF4E6),
                   iconColor: AppColors.amber,
                   label: 'Notifications',
                   trailingObs: controller.notificationCount,
+                  isLoading: controller.isLoading.value,
                   onTap: () => Get.to(() => const NotificationsScreen()),
-                ),
+                )),
 
                 const SizedBox(height: 8),
 
                 // ── Account section ──────────────────
                 _SectionLabel(label: 'Account'),
-                _MenuItem(
+                Obx(() => _MenuItem(
                   icon: Icons.person_outline_rounded,
                   iconBg: AppColors.purpleSoft,
                   iconColor: AppColors.purple,
                   label: 'Edit Profile',
+                  isLoading: controller.isLoading.value,
                   onTap: () => _showEditProfileSheet(context, controller),
-                ),
-                _MenuItem(
+                )),
+                Obx(() => _MenuItem(
                   icon: Icons.lock_outline_rounded,
                   iconBg: AppColors.purpleSoft,
                   iconColor: AppColors.purple,
                   label: 'Privacy & Security',
+                  isLoading: controller.isLoading.value,
                   onTap: () => _showPrivacySheet(context, controller),
-                ),
-                _MenuItem(
+                )),
+                Obx(() => _MenuItem(
                   icon: Icons.help_outline_rounded,
                   iconBg: AppColors.bg,
                   iconColor: AppColors.textSecondary,
                   label: 'Help & Support',
+                  isLoading: controller.isLoading.value,
                   onTap: () => _showHelpSheet(context),
-                ),
+                )),
 
                 const SizedBox(height: 8),
 
@@ -528,6 +553,7 @@ class ProfileScreen extends StatelessWidget {
 
   // ── Help & Support Bottom Sheet ───────────
   void _showHelpSheet(BuildContext context) {
+    final controller = Get.find<ProfileController>();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -547,20 +573,20 @@ class ProfileScreen extends StatelessWidget {
             _HelpItem(
               icon: Icons.email_outlined,
               title: 'Email Support',
-              subtitle: 'support@outrace.in',
-              onTap: () {},
+              subtitle: 'kamalivs20@gmail.com',
+              onTap: () => controller.launchURL('mailto:kamalivs20@gmail.com'),
             ),
             _HelpItem(
               icon: Icons.phone_outlined,
               title: 'Call Support',
-              subtitle: '+91 1800-123-4567 (Toll Free)',
-              onTap: () {},
+              subtitle: '+91 6381779723',
+              onTap: () => controller.launchURL('tel:+916381779723'),
             ),
             _HelpItem(
               icon: Icons.menu_book_outlined,
               title: 'Documentation',
               subtitle: 'Read our user guide & FAQs',
-              onTap: () {},
+              onTap: () => controller.generateUserGuide(),
             ),
             _HelpItem(
               icon: Icons.bug_report_outlined,
@@ -1002,6 +1028,7 @@ class _MenuItem extends StatelessWidget {
   final VoidCallback? onTap;
   final String? customIconAsset;
   final bool isComingSoon;
+  final bool isLoading;
 
   const _MenuItem({
     required this.icon,
@@ -1014,10 +1041,27 @@ class _MenuItem extends StatelessWidget {
     this.onTap,
     this.customIconAsset,
     this.isComingSoon = false,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        height: 62,
+        child: Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        ),
+      );
+    }
     return GestureDetector(
       onTap: isComingSoon ? null : onTap,
       child: Container(

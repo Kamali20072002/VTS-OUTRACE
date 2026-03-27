@@ -2,6 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:notix_pro/notix_pro.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/exceptions/app_exception.dart';
 import '../../../../core/utils/token_storage.dart';
 import '../../domain/models/profile_model.dart';
@@ -314,6 +318,11 @@ class ProfileController extends GetxController {
       onCancel: () {},
       onConfirm: () async {
         await TokenStorage.clearAll();
+        
+        // Delete controllers before navigating to ensure they are re-initialized with defaults
+        Get.delete<HomeController>();
+        Get.delete<ProfileController>();
+        
         Get.offAll(
           () => const LoginScreen(),
           transition: Transition.fadeIn,
@@ -338,5 +347,172 @@ class ProfileController extends GetxController {
         title: title,
         message: message,
         position: NotixToastPosition.top);
+  }
+
+  // ── Support Helpers ────────────────────────
+  Future<void> launchURL(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    try {
+      if (urlString.startsWith('tel:') || urlString.startsWith('mailto:')) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Could not launch $urlString';
+      }
+    } catch (e) {
+      debugPrint('Launch Error: $e');
+      Get.snackbar(
+        'Launch Error',
+        'Could not open the link. Please ensure a supporting app is installed.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.withOpacity(0.8),
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> generateUserGuide() async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(40),
+        header: (context) => pw.Column(
+          children: [
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Outrace VTS Documentation',
+                    style: pw.TextStyle(color: PdfColors.grey700, fontSize: 10)),
+                pw.Text('Page ${context.pageNumber} of ${context.pagesCount}',
+                    style: pw.TextStyle(color: PdfColors.grey700, fontSize: 10)),
+              ],
+            ),
+            pw.Divider(thickness: 0.5),
+            pw.SizedBox(height: 10),
+          ],
+        ),
+        footer: (context) => pw.Column(
+          children: [
+            pw.SizedBox(height: 10),
+            pw.Divider(thickness: 0.5),
+            pw.Center(
+              child: pw.Text('Copyright © 2026 Outrace. All rights reserved.',
+                  style: pw.TextStyle(color: PdfColors.grey600, fontSize: 9)),
+            ),
+          ],
+        ),
+        build: (pw.Context context) {
+          return [
+            pw.Center(
+              child: pw.Text('USER GUIDE & MANUAL',
+                  style: pw.TextStyle(
+                      fontSize: 28, fontWeight: pw.FontWeight.bold)),
+            ),
+            pw.SizedBox(height: 30),
+            
+            pw.Text('1. Welcome to Outrace',
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900)),
+            pw.SizedBox(height: 10),
+            pw.Text(
+                'Outrace Vehicle Tracking System (VTS) provides state-of-the-art fleet management solutions. Our platform allows you to monitor your vehicles in real-time, analyze journey history, and receive critical security alerts.'),
+            pw.SizedBox(height: 20),
+
+            pw.Text('2. Getting Started',
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900)),
+            pw.SizedBox(height: 10),
+            pw.Text('Step 1: Account Creation', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Paragraph(text: 'Download the app and create your account using your email address. Ensure you verify your email to unlock all tracking features.'),
+            pw.SizedBox(height: 5),
+            pw.Text('Step 2: Device Activation', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Paragraph(text: 'Navigate to "My Devices" and click on "Activate Device". Enter the 15-digit IMEI number found on your Outrace GPS hardware unit.'),
+            pw.SizedBox(height: 5),
+            pw.Text('Step 3: Vehicle Registration', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Paragraph(text: 'Once a device is activated, you can link it to a vehicle by providing the registration number, make, and model.'),
+            pw.SizedBox(height: 20),
+
+            pw.Text('3. Dashboard Navigation',
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900)),
+            pw.SizedBox(height: 10),
+            pw.Bullet(text: 'Live Map: View current positions of all active vehicles.'),
+            pw.Bullet(text: 'Search: Quickly find vehicles by registration number.'),
+            pw.Bullet(text: 'Filters: Filter your fleet by vehicle type (Car, Bike, Truck).'),
+            pw.Bullet(text: 'Status Cards: Monitor GPS signal strength and server connectivity status.'),
+            pw.SizedBox(height: 20),
+
+            pw.Text('4. Real-time Tracking Features',
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900)),
+            pw.SizedBox(height: 10),
+            pw.Text('Our tracking system updates every 5-10 seconds to provide the most accurate location data available. You can view:'),
+            pw.Bullet(text: 'Current Speed & Heading direction.'),
+            pw.Bullet(text: 'Ignition Status (On/Off).'),
+            pw.Bullet(text: 'Last updated timestamp.'),
+            pw.Bullet(text: 'Nearby landmarks and full address details.'),
+            
+            pw.NewPage(), // Force start of second page
+
+            pw.Text('5. Trip History & Analytics',
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900)),
+            pw.SizedBox(height: 10),
+            pw.Text('The Trips section archives every journey taken by your fleet. Each trip record includes:'),
+            pw.Bullet(text: 'Start and End locations with timestamps.'),
+            pw.Bullet(text: 'Total distance traveled in kilometers.'),
+            pw.Bullet(text: 'Total driving time.'),
+            pw.Bullet(text: 'Average and maximum speed attained.'),
+            pw.Paragraph(text: 'You can generate and share PDF reports of these journeys for expense claims or maintenance scheduling.'),
+            pw.SizedBox(height: 20),
+
+            pw.Text('6. Security & Alerts',
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900)),
+            pw.SizedBox(height: 10),
+            pw.Text('Configure custom alerts to stay informed about your vehicle\'s safety:'),
+            pw.Bullet(text: 'Overspeeding: Get notified when a vehicle exceeds a set speed limit.'),
+            pw.Bullet(text: 'Geofencing: Create virtual boundaries and receive alerts when a vehicle enters or exits the area.'),
+            pw.Bullet(text: 'Tamper Alerts: Receive immediate notification if the GPS device is disconnected.'),
+            pw.SizedBox(height: 20),
+
+            pw.Text('7. Frequently Asked Questions',
+                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900)),
+            pw.SizedBox(height: 10),
+            pw.Text('Q: What happens if the vehicle goes into a basement or tunnel?',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Text('A: The device will store data in its internal memory and upload it once it reconnects to the cellular network.'),
+            pw.SizedBox(height: 10),
+            pw.Text('Q: How many vehicles can I track on one account?',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Text('A: There is no limit to the number of vehicles you can add to your enterprise account.'),
+            pw.SizedBox(height: 10),
+            pw.Text('Q: Is my location data shared with third parties?',
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+            pw.Text('A: No, your data is strictly private and encrypted using industry-standard AES-256 protocols.'),
+            pw.SizedBox(height: 30),
+
+            pw.Container(
+              padding: const pw.EdgeInsets.all(15),
+              decoration: pw.BoxDecoration(
+                color: PdfColors.grey200,
+                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text('Need Technical Assistance?', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  pw.SizedBox(height: 5),
+                  pw.Text('Our support team is available 24/7 to help you with hardware installation or software queries.'),
+                  pw.SizedBox(height: 5),
+                  pw.Text('Email: kamalivs20@gmail.com'),
+                  pw.Text('Phone: +91 6381779723'),
+                ],
+              ),
+            ),
+          ];
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save());
   }
 }

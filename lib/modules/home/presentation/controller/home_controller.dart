@@ -35,6 +35,7 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    currentIndex.value = 0;
     loadActiveVehicles();
   }
 
