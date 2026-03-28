@@ -30,7 +30,7 @@ class TripsScreen extends StatelessWidget {
             // ── HEADER ───────────────────────────────────────────────────────
             // Reduced height: was topPad+190, now topPad+170
             SizedBox(
-              height: topPad + 170,
+              height: topPad + 180,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -53,29 +53,37 @@ class TripsScreen extends StatelessWidget {
                   Positioned(
                     top: topPad + 18,
                     left: 20,
-                    child: Column(
+                    right: 20,
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Trip History',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          'Report',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Trip History',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                'Report',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                  // White rounded bottom strip — smaller overlap
+                  // White rounded bottom strip
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -90,13 +98,13 @@ class TripsScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Car — sits lower so less empty space below it
+                  // Car
                   Positioned(
-                    bottom: 0,
+                    bottom: 5,
                     right: -15,
                     child: Image.asset(
                       'assets/images/bmw_x6.png',
-                      width: screenWidth * 0.72,
+                      width: screenWidth * 0.70,
                       fit: BoxFit.contain,
                     ),
                   ),

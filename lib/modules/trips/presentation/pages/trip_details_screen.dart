@@ -134,7 +134,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
       markerId: const MarkerId('start'),
       position: points.first,
       infoWindow: InfoWindow(title: _startArea),
-      icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+      icon: BitmapDescriptor.defaultMarkerWithHue(120.0), // Using dark green hue if possible or custom
     ));
     _markers.add(Marker(
       markerId: const MarkerId('end'),
@@ -255,14 +255,14 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                       margin: const EdgeInsets.only(right: 16),
                       decoration: BoxDecoration(
                         color: _status == 'COMPLETED'
-                            ? AppColors.green.withOpacity(0.2)
+                            ? const Color(0xFF006400).withOpacity(0.1)
                             : AppColors.amber.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: _status == 'COMPLETED'
-                              ? AppColors.green
+                              ? const Color(0xFF006400)
                               : AppColors.amber,
-                          width: 1,
+                          width: 1.5,
                         ),
                       ),
                       child: Text(
@@ -271,7 +271,7 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: _status == 'COMPLETED'
-                              ? AppColors.green
+                              ? const Color(0xFF006400)
                               : AppColors.amber,
                         ),
                       ),
@@ -336,8 +336,12 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.directions_car_rounded,
-                                  size: 16, color: AppColors.purple),
+                              Image.asset(
+                                'assets/icons/car.png',
+                                width: 20,
+                                height: 20,
+                                fit: BoxFit.contain,
+                              ),
                               const SizedBox(width: 8),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,

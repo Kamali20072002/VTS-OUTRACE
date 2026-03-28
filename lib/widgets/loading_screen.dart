@@ -80,9 +80,16 @@ class _LoadingScreenState extends State<LoadingScreen>
   }
 
   Future<void> _startLoadingProcess() async {
+    // 0. Initialize controllers immediately so they are available for build()
+    Get.put(HomeController());
+    Get.put(TripsController());
+    Get.put(ProfileController());
+
     try {
       // 1. Check Internet
-      if (mounted) setState(() => _msgIndex = 0);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _msgIndex = 0);
+      });
       await _progressCtrl.animateTo(0.15);
       
       final hasInternet = await _checkInternet();
@@ -96,19 +103,19 @@ class _LoadingScreenState extends State<LoadingScreen>
 
       // 2. Load Vehicle Data
       if (mounted) setState(() => _msgIndex = 1);
-      final homeCtrl = Get.put(HomeController());
+      final homeCtrl = Get.find<HomeController>();
       await homeCtrl.loadActiveVehicles();
       await _progressCtrl.animateTo(0.5);
 
       // 3. Sync Fleet Locations & Trips
       if (mounted) setState(() => _msgIndex = 2);
-      final tripsCtrl = Get.put(TripsController());
+      final tripsCtrl = Get.find<TripsController>();
       await tripsCtrl.fetchTrips();
       await _progressCtrl.animateTo(0.75);
 
       // 4. Initialise Dashboard
       if (mounted) setState(() => _msgIndex = 3);
-      final profileCtrl = Get.put(ProfileController());
+      final profileCtrl = Get.find<ProfileController>();
       await profileCtrl.refreshProfile();
       await _progressCtrl.animateTo(1.0);
 
@@ -345,34 +352,40 @@ class _LoadingScreenState extends State<LoadingScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Row(
                         children: [
-                          _StatusCard(
-                            icon: Icons.location_on_rounded,
-                            label: 'GPS Signal',
-                            value: _isOnline ? 'Strong' : 'None',
-                            valueColor: _isOnline ? AppColors.green : AppColors.red,
-                            iconColor: _isOnline ? AppColors.green : AppColors.red,
-                            iconBg: _isOnline ? AppColors.greenSoft : AppColors.red.withOpacity(0.1),
+                          Expanded(
+                            child: _StatusCard(
+                              icon: Icons.location_on_rounded,
+                              label: 'GPS Signal',
+                              value: _isOnline ? 'Strong' : 'None',
+                              valueColor: _isOnline ? AppColors.green : AppColors.red,
+                              iconColor: _isOnline ? AppColors.green : AppColors.red,
+                              iconBg: _isOnline ? AppColors.greenSoft : AppColors.red.withOpacity(0.1),
+                            ),
                           ),
                           const SizedBox(width: 8),
-                          Obx(() {
-                            final homeCtrl = Get.find<HomeController>();
-                            final count = homeCtrl.vehicles.length;
-                            return _StatusCardWithImage(
-                              imagePath: 'assets/icons/loading_car.png',
-                              label: 'Vehicles',
-                              value: '$count Found',
-                              valueColor: AppColors.purple,
-                              iconBg: AppColors.purpleSoft,
-                            );
-                          }),
+                          Expanded(
+                            child: Obx(() {
+                              final homeCtrl = Get.find<HomeController>();
+                              final count = homeCtrl.vehicles.length;
+                              return _StatusCardWithImage(
+                                imagePath: 'assets/icons/loading_car.png',
+                                label: 'Vehicles',
+                                value: '$count Found',
+                                valueColor: AppColors.purple,
+                                iconBg: AppColors.purpleSoft,
+                              );
+                            }),
+                          ),
                           const SizedBox(width: 8),
-                          _StatusCard(
-                            icon: Icons.cloud_done_rounded,
-                            label: 'Server',
-                            value: _isOnline ? 'Connected' : 'Offline',
-                            valueColor: _isOnline ? AppColors.green : AppColors.red,
-                            iconColor: _isOnline ? AppColors.green : AppColors.red,
-                            iconBg: _isOnline ? AppColors.greenSoft : AppColors.red.withOpacity(0.1),
+                          Expanded(
+                            child: _StatusCard(
+                              icon: Icons.cloud_done_rounded,
+                              label: 'Server',
+                              value: _isOnline ? 'Connected' : 'Offline',
+                              valueColor: _isOnline ? AppColors.green : AppColors.red,
+                              iconColor: _isOnline ? AppColors.green : AppColors.red,
+                              iconBg: _isOnline ? AppColors.greenSoft : AppColors.red.withOpacity(0.1),
+                            ),
                           ),
                         ],
                       ),
@@ -520,9 +533,8 @@ class _StatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
@@ -557,9 +569,8 @@ class _StatusCard extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
+       ),
+);
   }
 }
 
@@ -580,9 +591,8 @@ class _StatusCardWithImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
@@ -620,9 +630,8 @@ class _StatusCardWithImage extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
+  ),
+);
   }
 }
 

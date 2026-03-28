@@ -376,31 +376,75 @@ class _HomePage extends StatelessWidget {
                           ),
                         },
                       ),
+                      if (controller.isLoading.value)
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const SizedBox(
+                                  width: 12,
+                                  height: 12,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.purple,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Tracking...',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       if (markers.isEmpty && !controller.isLoading.value)
-                       Center(
-  child: Container(
-    padding: const EdgeInsets.symmetric(
-      horizontal: 16,
-      vertical: 8,
-    ),
-    decoration: BoxDecoration(
-      color: Colors.red.withOpacity(0.1), // light transparent red
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(
-        color: Colors.red, // red border
-        width: 1.5, // optional: slightly thicker
-      ),
-    ),
-    child: Text(
-      'No online devices right now',
-      style: GoogleFonts.plusJakartaSans(
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
-      ),
-    ),
-  ),
-)
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.red,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(
+                              'No online devices right now',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        )
                     ],
                   );
                 }),
