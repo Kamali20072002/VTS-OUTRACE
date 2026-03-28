@@ -125,6 +125,7 @@ class HomeController extends GetxController {
         );
       }
     }
+    // ignore: invalid_use_of_protected_member
     homeMarkers.value = markers;
 
     if (markers.isNotEmpty) {

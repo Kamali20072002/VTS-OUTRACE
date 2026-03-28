@@ -30,10 +30,55 @@ class TripsController extends GetxController {
 
   final RxBool isLoading = false.obs;
 
+  // Pagination
+  final RxInt currentPage = 1.obs;
+  final int itemsPerPage = 15;
+  final RxList paginatedTrips = [].obs;
+
   @override
   void onInit() {
     super.onInit();
     fetchTrips();
+  }
+
+  int get totalPages {
+    if (filteredTrips.isEmpty) return 1;
+    return (filteredTrips.length / itemsPerPage).ceil();
+  }
+
+  void nextPage() {
+    if (currentPage.value < totalPages) {
+      currentPage.value++;
+      _updatePaginatedTrips();
+    }
+  }
+
+  void previousPage() {
+    if (currentPage.value > 1) {
+      currentPage.value--;
+      _updatePaginatedTrips();
+    }
+  }
+
+  void goToPage(int page) {
+    if (page >= 1 && page <= totalPages) {
+      currentPage.value = page;
+      _updatePaginatedTrips();
+    }
+  }
+
+  void _updatePaginatedTrips() {
+    final startIndex = (currentPage.value - 1) * itemsPerPage;
+    final endIndex = startIndex + itemsPerPage;
+    
+    if (startIndex >= filteredTrips.length) {
+      paginatedTrips.value = [];
+    } else {
+      paginatedTrips.value = filteredTrips.sublist(
+        startIndex,
+        endIndex > filteredTrips.length ? filteredTrips.length : endIndex,
+      );
+    }
   }
 
   Future<void> fetchTrips({bool forceRefresh = false}) async {
@@ -84,6 +129,7 @@ class TripsController extends GetxController {
       final regs = mappedTrips.map((t) => t['regNo'].toString()).toSet().toList();
       vehicleRegNumbers.value = ['All Vehicles', ...regs];
 
+      currentPage.value = 1;
       applyFilters();
     } catch (e) {
       Get.snackbar('Error', 'Failed to fetch trip history: $e');
@@ -94,12 +140,14 @@ class TripsController extends GetxController {
 
   void setVehicleTypeFilter(String type) {
     selectedVehicleType.value = type;
+    currentPage.value = 1;
     applyFilters();
   }
 
   void setVehicleRegFilter(String? reg) {
     if (reg == null) return;
     selectedVehicleReg.value = reg;
+    currentPage.value = 1;
     applyFilters();
   }
 
@@ -122,6 +170,7 @@ class TripsController extends GetxController {
     }
 
     filteredTrips.value = result;
+    _updatePaginatedTrips();
   }
 
   String formatDuration(num seconds) {
@@ -255,12 +304,14 @@ class TripsController extends GetxController {
   void clearFilters() {
     selectedVehicleType.value = 'All';
     selectedVehicleReg.value = 'All Vehicles';
+    currentPage.value = 1;
     applyFilters();
   }
 
   void setSort(String? sort) {
     if (sort == null) return;
     selectedSort.value = sort;
+    currentPage.value = 1;
     applyFilters();
   }
 }

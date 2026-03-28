@@ -414,19 +414,57 @@ class TripsScreen extends StatelessWidget {
                         ),
                       );
                     }
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: controller.filteredTrips.length,
-                      padding: const EdgeInsets.only(bottom: 10),
-                      itemBuilder: (context, index) {
-                        final trip = controller.filteredTrips[index];
-                        return GestureDetector(
-                          onTap: () =>
-                              Get.to(() => TripDetailsScreen(trip: trip)),
-                          child: _TripItem(trip: trip),
-                        );
-                      },
+                    return Column(
+                      children: [
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: controller.paginatedTrips.length,
+                          padding: const EdgeInsets.only(bottom: 10),
+                          itemBuilder: (context, index) {
+                            final trip = controller.paginatedTrips[index];
+                            return GestureDetector(
+                              onTap: () =>
+                                  Get.to(() => TripDetailsScreen(trip: trip)),
+                              child: _TripItem(trip: trip),
+                            );
+                          },
+                        ),
+                        
+                        // Pagination Controls
+                        if (controller.totalPages > 1)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _PaginationBtn(
+                                  label: 'Previous',
+                                  icon: Icons.arrow_back_ios_new_rounded,
+                                  onTap: controller.currentPage.value > 1 
+                                    ? controller.previousPage 
+                                    : null,
+                                ),
+                                Text(
+                                  'Page ${controller.currentPage.value} of ${controller.totalPages}',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                _PaginationBtn(
+                                  label: 'Next',
+                                  icon: Icons.arrow_forward_ios_rounded,
+                                  isRight: true,
+                                  onTap: controller.currentPage.value < controller.totalPages 
+                                    ? controller.nextPage 
+                                    : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     );
                   }),
                 ],
@@ -1026,4 +1064,58 @@ class _MiniMapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+class _PaginationBtn extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isRight;
+  final VoidCallback? onTap;
+
+  const _PaginationBtn({
+    required this.label,
+    required this.icon,
+    this.isRight = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool disabled = onTap == null;
+    final Color color = disabled ? AppColors.textTertiary.withOpacity(0.3) : AppColors.purple;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: color.withOpacity(0.2)),
+          borderRadius: BorderRadius.circular(8),
+          color: color.withOpacity(0.05),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!isRight) ...[
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+            if (isRight) ...[
+              const SizedBox(width: 6),
+              Icon(icon, size: 14, color: color),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }
