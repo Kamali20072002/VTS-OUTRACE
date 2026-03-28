@@ -29,6 +29,16 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
   );
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.isRegistered<VehiclesController>()) {
+        Get.find<VehiclesController>().centerToFirstVehicle(force: true);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final controller = Get.put(VehiclesController());
 

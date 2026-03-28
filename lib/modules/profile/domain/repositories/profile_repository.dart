@@ -5,42 +5,42 @@ import '../../data/api/profile_api.dart';
 class ProfileRepository {
   final ProfileApiCalls _api = ProfileApiCalls();
 
-  Future<Map<String, dynamic>> getProfile() async {
-    return await _api.getProfile();
+  Future<Map<String, dynamic>> getProfile({bool forceRefresh = false}) async {
+    return await _api.getProfile(forceRefresh: forceRefresh);
   }
 
-  Future<List<DeviceModel>> getMyDevices() async {
-    final json = await _api.getMyDevices();
+  Future<List<DeviceModel>> getMyDevices({bool forceRefresh = false}) async {
+    final json = await _api.getMyDevices(forceRefresh: forceRefresh);
     final data = json['data'] as List<dynamic>? ?? [];
     return data
         .map((d) => DeviceModel.fromJson(d as Map<String, dynamic>))
         .toList();
   }
 
-  Future<List<VehicleModel>> getMyVehicles() async {
-    final json = await _api.getMyVehicles();
+  Future<List<VehicleModel>> getMyVehicles({bool forceRefresh = false}) async {
+    final json = await _api.getMyVehicles(forceRefresh: forceRefresh);
     final data = json['data'] as List<dynamic>? ?? [];
     return data
         .map((d) => VehicleModel.fromJson(d as Map<String, dynamic>))
         .toList();
   }
 
-  Future<Map<String, String>> getVehicleTypes() async {
-    final json = await _api.getVehicleTypes();
+  Future<Map<String, String>> getVehicleTypes({bool forceRefresh = false}) async {
+    final json = await _api.getVehicleTypes(forceRefresh: forceRefresh);
     final data = json['data'] as Map<String, dynamic>? ?? {};
     return data.map((key, value) => MapEntry(key, value.toString()));
   }
 
-  Future<List<DeviceModel>> getUnassignedDevices() async {
-    final json = await _api.getUnassignedDevices();
+  Future<List<DeviceModel>> getUnassignedDevices({bool forceRefresh = false}) async {
+    final json = await _api.getUnassignedDevices(forceRefresh: forceRefresh);
     final data = json['data'] as List<dynamic>? ?? [];
     return data
         .map((d) => DeviceModel.fromJson(d as Map<String, dynamic>))
         .toList();
   }
 
-  Future<Map<String, dynamic>> getVehicleDetails(String id) async {
-    return await _api.getVehicleDetails(id);
+  Future<Map<String, dynamic>> getVehicleDetails(String id, {bool forceRefresh = false}) async {
+    return await _api.getVehicleDetails(id, forceRefresh: forceRefresh);
   }
 
   Future<DeviceModel> activateDevice(String imei) async {
@@ -80,8 +80,8 @@ class ProfileRepository {
     );
   }
 
-  Future<List<NotificationModel>> getMyAlerts() async {
-    final json = await _api.getMyAlerts();
+  Future<List<NotificationModel>> getMyAlerts({bool forceRefresh = false}) async {
+    final json = await _api.getMyAlerts(forceRefresh: forceRefresh);
     final data = json['data'] as List<dynamic>? ?? [];
     return data
         .map((n) => NotificationModel.fromJson(n as Map<String, dynamic>))

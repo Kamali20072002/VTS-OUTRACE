@@ -69,10 +69,12 @@ class ProfileController extends GetxController {
   }
 
   // ── Load profile ───────────────────────────
-  Future<void> refreshProfile() async {
-    isLoading.value = true;
+  Future<void> refreshProfile({bool forceRefresh = false}) async {
+    if (email.isEmpty) {
+      isLoading.value = true;
+    }
     try {
-      final json = await _repo.getProfile();
+      final json = await _repo.getProfile(forceRefresh: forceRefresh);
       final data = json['data'] as Map<String, dynamic>?;
       if (data != null) {
         final user  = ProfileModel.fromJson(
@@ -123,10 +125,12 @@ class ProfileController extends GetxController {
   }
 
   // ── Load my devices ────────────────────────
-  Future<void> loadMyDevices() async {
-    isLoadingDevices.value = true;
+  Future<void> loadMyDevices({bool forceRefresh = false}) async {
+    if (myDevices.isEmpty) {
+      isLoadingDevices.value = true;
+    }
     try {
-      final list = await _repo.getMyDevices();
+      final list = await _repo.getMyDevices(forceRefresh: forceRefresh);
       myDevices.value = list;
     } catch (e) {
       debugPrint('Devices Error: $e');

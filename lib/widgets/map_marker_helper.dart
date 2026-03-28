@@ -66,16 +66,16 @@ class MapMarkerHelper {
     }
 
     final Color outerRing = isOnline
-        ? baseColor.withOpacity(0.18)
-        : Colors.grey.withOpacity(0.14);
+        ? baseColor.withOpacity(0.22)
+        : baseColor.withOpacity(0.12);
 
     final Color innerRing = isOnline
-        ? baseColor.withOpacity(0.42)
-        : Colors.grey.withOpacity(0.32);
+        ? baseColor.withOpacity(0.48)
+        : baseColor.withOpacity(0.24);
 
     final Color fill = isOnline
         ? baseColor
-        : const Color(0xFF9E9E9E);
+        : baseColor.withOpacity(0.65);
 
     // ── Draw rings ─────────────────────────────────────────────────
     // Outer faint ring

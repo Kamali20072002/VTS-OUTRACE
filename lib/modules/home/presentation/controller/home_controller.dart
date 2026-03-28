@@ -39,10 +39,14 @@ class HomeController extends GetxController {
     loadActiveVehicles();
   }
 
-  Future<void> loadActiveVehicles() async {
-    isLoading.value = true;
+  Future<void> loadActiveVehicles({bool forceRefresh = false}) async {
+    // Show loading only if no vehicles are currently present
+    if (vehicles.isEmpty) {
+      isLoading.value = true;
+    }
+    
     try {
-      final list = await _repo.getActiveVehicles();
+      final list = await _repo.getActiveVehicles(forceRefresh: forceRefresh);
       vehicles.value = list;
       
       // Extract unique types
@@ -52,7 +56,8 @@ class HomeController extends GetxController {
       applyFilters();
     } catch (e) {
       debugPrint('Home Load Error: $e');
-      if (Get.context != null) {
+      if (Get.context != null && !forceRefresh) {
+        // Only show toast if it's NOT a background refresh
         NotixToast.show(
           Get.context!,
           type: NotixType.error,

@@ -15,6 +15,7 @@ class ActiveVehicleModel {
   final String? timestamp;
   final double? batteryLevel;
   final int? signalStrength;
+  final String? status;
 
   ActiveVehicleModel({
     required this.id,
@@ -33,6 +34,7 @@ class ActiveVehicleModel {
     this.timestamp,
     this.batteryLevel,
     this.signalStrength,
+    this.status,
   });
 
   factory ActiveVehicleModel.fromJson(Map<String, dynamic> json) {
@@ -53,8 +55,9 @@ class ActiveVehicleModel {
       timestamp: json['timestamp'],
       batteryLevel: (json['battery_level'] as num?)?.toDouble(),
       signalStrength: json['signal_strength'],
+      status: json['status'],
     );
   }
 
-  bool get isOnline => latitude != null && longitude != null;
+  bool get isOnline => status == 'ONLINE';
 }

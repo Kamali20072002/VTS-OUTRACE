@@ -18,360 +18,410 @@ class ProfileScreen extends StatelessWidget {
     final homeController = Get.find<HomeController>();
     final topPad = MediaQuery.of(context).padding.top;
 
-    return SingleChildScrollView(
-      controller: homeController.profileScrollController,
-      padding: const EdgeInsets.only(bottom: 100),
-      child: Column(
-        children: [
-
-          // ── Dark header ──────────────────────────
-          Container(
-            width: double.infinity,
-            color: AppColors.dark,
-            padding: EdgeInsets.fromLTRB(20, topPad + 20, 20, 28),
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -30,
-                  right: -30,
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.purple.withOpacity(0.12),
-                    ),
-                  ),
-                ),
-                Column(
-                  children: [
-                    // Avatar
-                    Obx(() => Container(
-                      width: 76,
-                      height: 76,
+    return RefreshIndicator(
+      onRefresh: () => controller.refreshProfile(forceRefresh: true),
+      color: AppColors.purple,
+      child: SingleChildScrollView(
+        controller: homeController.profileScrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 100),
+        child: Column(
+          children: [
+            // ── Dark header ──────────────────────────
+            Container(
+              width: double.infinity,
+              color: AppColors.dark,
+              padding: EdgeInsets.fromLTRB(20, topPad + 20, 20, 28),
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -30,
+                    right: -30,
+                    child: Container(
+                      width: 120,
+                      height: 120,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(
-                            color: controller.isLoading.value ? Colors.transparent : AppColors.purple, width: 2.5),
-                        color: AppColors.dark2,
+                        color: AppColors.purple.withOpacity(0.12),
                       ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          if (controller.isLoading.value)
-                            SizedBox.expand(
-                              child: Shimmer.fromColors(
-                                baseColor: AppColors.purple.withOpacity(0.12),
-                                highlightColor: AppColors.purple,
-                                period: const Duration(milliseconds: 1500),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 2.5),
+                    ),
+                  ),
+                  Column(
+                    children: [
+                      // Avatar
+                      Obx(
+                        () => Container(
+                          width: 76,
+                          height: 76,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: controller.isLoading.value
+                                  ? Colors.transparent
+                                  : AppColors.purple,
+                              width: 2.5,
+                            ),
+                            color: AppColors.dark2,
+                          ),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              if (controller.isLoading.value)
+                                SizedBox.expand(
+                                  child: Shimmer.fromColors(
+                                    baseColor: AppColors.purple.withOpacity(
+                                      0.12,
+                                    ),
+                                    highlightColor: AppColors.purple,
+                                    period: const Duration(milliseconds: 1500),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2.5,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
+                              const Icon(
+                                Icons.person_rounded,
+                                color: Colors.white,
+                                size: 36,
                               ),
-                            ),
-                          const Icon(Icons.person_rounded,
-                              color: Colors.white, size: 36),
-                        ],
+                            ],
+                          ),
+                        ),
                       ),
-                    )),
-                    const SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
-                    Obx(() => controller.isLoading.value
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            controller.name.value,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                          )),
-                    const SizedBox(height: 4),
-
-                    Obx(() => Text(
-                      controller.email.value,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        color: Colors.white.withOpacity(0.5),
+                      Obx(
+                        () => controller.isLoading.value
+                            ? Shimmer.fromColors(
+                                baseColor: Colors.white.withOpacity(0.1),
+                                highlightColor: Colors.white.withOpacity(0.3),
+                                child: Container(
+                                  width: 140,
+                                  height: 22,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                controller.name.value,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
-                    )),
-                    const SizedBox(height: 4),
+                      const SizedBox(height: 4),
 
-                    Obx(() => controller.phone.value.isNotEmpty
-                        ? Text(
-                            controller.phone.value,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              color: Colors.white.withOpacity(0.4),
+                      Obx(
+                        () => Text(
+                          controller.email.value,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            color: Colors.white.withOpacity(0.5),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+
+                      Obx(
+                        () => controller.phone.value.isNotEmpty
+                            ? Text(
+                                controller.phone.value,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  color: Colors.white.withOpacity(0.4),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Stats row
+                      Obx(
+                        () => Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _ProfileStat(
+                              value: '${controller.vehicleCount.value}',
+                              label: 'Vehicles',
                             ),
-                          )
-                        : const SizedBox.shrink()),
-
-                    const SizedBox(height: 16),
-
-                    // Stats row
-                    Obx(() => Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _ProfileStat(
-                          value: '${controller.vehicleCount.value}',
-                          label: 'Vehicles',
+                            _Divider(),
+                            _ProfileStat(
+                              value: '${controller.totalTrips.value}',
+                              label: 'Total Trips',
+                            ),
+                            _Divider(),
+                            _ProfileStat(
+                              value: '${controller.totalKm.value} km',
+                              label: 'Tracked',
+                            ),
+                          ],
                         ),
-                        _Divider(),
-                        _ProfileStat(
-                          value: '${controller.totalTrips.value}',
-                          label: 'Total Trips',
-                        ),
-                        _Divider(),
-                        _ProfileStat(
-                          value: '${controller.totalKm.value} km',
-                          label: 'Tracked',
-                        ),
-                      ],
-                    )),
-                  ],
-                ),
-              ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Fleet section ────────────────────
+                  _SectionLabel(label: 'Fleet'),
+                  _MenuItem(
+                    icon: Icons.directions_car_rounded, // fallback icon
+                    customIconAsset: 'assets/icons/car.png',
+                    iconBg: AppColors.purpleSoft,
+                    iconColor: AppColors.purple,
+                    label: 'My Vehicles',
+                    trailingObs: controller.vehicleCount,
+                    onTap: () => Get.to(() => const VehiclesScreen()),
+                  ),
 
-                // ── Fleet section ────────────────────
-                _SectionLabel(label: 'Fleet'),
-                _MenuItem(
-                  icon: Icons.directions_car_rounded, // fallback icon
-                  customIconAsset: 'assets/icons/car.png',
-                  iconBg: AppColors.purpleSoft,
-                  iconColor: AppColors.purple,
-                  label: 'My Vehicles',
-                  trailingObs: controller.vehicleCount,
-                  onTap: () => Get.to(() => const VehiclesScreen()),
-                ),
-                
+                  const SizedBox(height: 8),
 
-                const SizedBox(height: 8),
+                  // ── Activity section ─────────────────
+                  _SectionLabel(label: 'Activity'),
+                  Obx(
+                    () => _MenuItem(
+                      icon: Icons.history_rounded,
+                      iconBg: AppColors.purpleSoft,
+                      iconColor: AppColors.purple,
+                      label: 'Trip History',
+                      isLoading: controller.isLoading.value,
+                      onTap: () {
+                        if (Get.isRegistered<HomeController>()) {
+                          Get.find<HomeController>().changeTab(2);
+                        }
+                      },
+                    ),
+                  ),
+                  Obx(
+                    () => _MenuItem(
+                      icon: Icons.notifications_outlined,
+                      iconBg: const Color(0xFFFFF4E6),
+                      iconColor: AppColors.amber,
+                      label: 'Notifications',
+                      trailingObs: controller.notificationCount,
+                      isLoading: controller.isLoading.value,
+                      onTap: () => Get.to(() => const NotificationsScreen()),
+                    ),
+                  ),
 
-                // ── Activity section ─────────────────
-                _SectionLabel(label: 'Activity'),
-                Obx(() => _MenuItem(
-                  icon: Icons.history_rounded,
-                  iconBg: AppColors.purpleSoft,
-                  iconColor: AppColors.purple,
-                  label: 'Trip History',
-                  isLoading: controller.isLoading.value,
-                  onTap: () {
-                    if (Get.isRegistered<HomeController>()) {
-                      Get.find<HomeController>().changeTab(2);
-                    }
-                  },
-                )),
-                Obx(() => _MenuItem(
-                  icon: Icons.notifications_outlined,
-                  iconBg: const Color(0xFFFFF4E6),
-                  iconColor: AppColors.amber,
-                  label: 'Notifications',
-                  trailingObs: controller.notificationCount,
-                  isLoading: controller.isLoading.value,
-                  onTap: () => Get.to(() => const NotificationsScreen()),
-                )),
+                  const SizedBox(height: 8),
 
-                const SizedBox(height: 8),
+                  // ── Account section ──────────────────
+                  _SectionLabel(label: 'Account'),
+                  Obx(
+                    () => _MenuItem(
+                      icon: Icons.person_outline_rounded,
+                      iconBg: AppColors.purpleSoft,
+                      iconColor: AppColors.purple,
+                      label: 'Edit Profile',
+                      isLoading: controller.isLoading.value,
+                      onTap: () => _showEditProfileSheet(context, controller),
+                    ),
+                  ),
+                  Obx(
+                    () => _MenuItem(
+                      icon: Icons.lock_outline_rounded,
+                      iconBg: AppColors.purpleSoft,
+                      iconColor: AppColors.purple,
+                      label: 'Privacy & Security',
+                      isLoading: controller.isLoading.value,
+                      onTap: () => _showPrivacySheet(context, controller),
+                    ),
+                  ),
+                  Obx(
+                    () => _MenuItem(
+                      icon: Icons.help_outline_rounded,
+                      iconBg: AppColors.bg,
+                      iconColor: AppColors.textSecondary,
+                      label: 'Help & Support',
+                      isLoading: controller.isLoading.value,
+                      onTap: () => _showHelpSheet(context),
+                    ),
+                  ),
 
-                // ── Account section ──────────────────
-                _SectionLabel(label: 'Account'),
-                Obx(() => _MenuItem(
-                  icon: Icons.person_outline_rounded,
-                  iconBg: AppColors.purpleSoft,
-                  iconColor: AppColors.purple,
-                  label: 'Edit Profile',
-                  isLoading: controller.isLoading.value,
-                  onTap: () => _showEditProfileSheet(context, controller),
-                )),
-                Obx(() => _MenuItem(
-                  icon: Icons.lock_outline_rounded,
-                  iconBg: AppColors.purpleSoft,
-                  iconColor: AppColors.purple,
-                  label: 'Privacy & Security',
-                  isLoading: controller.isLoading.value,
-                  onTap: () => _showPrivacySheet(context, controller),
-                )),
-                Obx(() => _MenuItem(
-                  icon: Icons.help_outline_rounded,
-                  iconBg: AppColors.bg,
-                  iconColor: AppColors.textSecondary,
-                  label: 'Help & Support',
-                  isLoading: controller.isLoading.value,
-                  onTap: () => _showHelpSheet(context),
-                )),
+                  const SizedBox(height: 8),
 
-                const SizedBox(height: 8),
-
-                _MenuItem(
-                  icon: Icons.logout_rounded,
-                  iconBg: AppColors.redSoft,
-                  iconColor: AppColors.red,
-                  label: 'Logout',
-                  isDestructive: true,
-                  onTap: () => controller.logout(context),
-                ),
-              ],
+                  _MenuItem(
+                    icon: Icons.logout_rounded,
+                    iconBg: AppColors.redSoft,
+                    iconColor: AppColors.red,
+                    label: 'Logout',
+                    isDestructive: true,
+                    onTap: () => controller.logout(context),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   // ── My Vehicles Bottom Sheet ──────────────
   void _showMyVehiclesSheet(
-      BuildContext context, ProfileController controller) {
+    BuildContext context,
+    ProfileController controller,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _BottomSheet(
         title: 'My Vehicles',
-        child: Obx(() => controller.vehicles.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.directions_car_outlined,
-                        size: 48, color: AppColors.textTertiary),
-                    const SizedBox(height: 12),
-                    Text(
-                      'No vehicles found',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
+        child: Obx(
+          () => controller.vehicles.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.directions_car_outlined,
+                        size: 48,
                         color: AppColors.textTertiary,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      Text(
+                        'No vehicles found',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: controller.vehicles.length,
+                  itemBuilder: (_, i) {
+                    final v = controller.vehicles[i];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppColors.purpleSoft,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.directions_car_rounded,
+                              color: AppColors.purple,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  v.model,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  v.registrationNumber,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    color: AppColors.textTertiary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: v.isOnline
+                                  ? AppColors.green.withOpacity(0.1)
+                                  : AppColors.bg,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    color: v.isOnline
+                                        ? AppColors.green
+                                        : AppColors.textTertiary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  v.isOnline ? 'Online' : 'Offline',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: v.isOnline
+                                        ? AppColors.green
+                                        : AppColors.textTertiary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
-              )
-            : ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: controller.vehicles.length,
-                itemBuilder: (_, i) {
-                  final v = controller.vehicles[i];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppColors.purpleSoft,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.directions_car_rounded,
-                            color: AppColors.purple,
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                v.model,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                v.registrationNumber,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12,
-                                  color: AppColors.textTertiary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: v.isOnline
-                                ? AppColors.green.withOpacity(0.1)
-                                : AppColors.bg,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: v.isOnline
-                                      ? AppColors.green
-                                      : AppColors.textTertiary,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                v.isOnline ? 'Online' : 'Offline',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: v.isOnline
-                                      ? AppColors.green
-                                      : AppColors.textTertiary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              )),
+        ),
       ),
     );
   }
 
   // ── Edit Profile Bottom Sheet ─────────────
   void _showEditProfileSheet(
-      BuildContext context, ProfileController controller) {
+    BuildContext context,
+    ProfileController controller,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => Padding(
         padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom),
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: _BottomSheet(
           title: 'Edit Profile',
           child: Column(
@@ -392,38 +442,40 @@ class ProfileScreen extends StatelessWidget {
                 maxLength: 10,
               ),
               const SizedBox(height: 24),
-              Obx(() => GestureDetector(
-                onTap: controller.isUpdating.value
-                    ? null
-                    : () => controller.updateProfile(context),
-                child: Container(
-                  width: double.infinity,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: AppColors.purple,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Center(
-                    child: controller.isUpdating.value
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+              Obx(
+                () => GestureDetector(
+                  onTap: controller.isUpdating.value
+                      ? null
+                      : () => controller.updateProfile(context),
+                  child: Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: AppColors.purple,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Center(
+                      child: controller.isUpdating.value
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              'Save Changes',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
                             ),
-                          )
-                        : Text(
-                            'Save Changes',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
+                    ),
                   ),
                 ),
-              )),
+              ),
             ],
           ),
         ),
@@ -432,15 +484,15 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // ── Privacy & Security Bottom Sheet ──────
-  void _showPrivacySheet(
-      BuildContext context, ProfileController controller) {
+  void _showPrivacySheet(BuildContext context, ProfileController controller) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => Padding(
         padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom),
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: _BottomSheet(
           title: 'Privacy & Security',
           child: Column(
@@ -458,60 +510,68 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 14),
 
-              Obx(() => _PasswordField(
-                label: 'Current Password',
-                controller: controller.oldPassCtrl,
-                showPass: controller.showOldPass.value,
-                onToggle: () => controller.showOldPass.toggle(),
-              )),
+              Obx(
+                () => _PasswordField(
+                  label: 'Current Password',
+                  controller: controller.oldPassCtrl,
+                  showPass: controller.showOldPass.value,
+                  onToggle: () => controller.showOldPass.toggle(),
+                ),
+              ),
               const SizedBox(height: 12),
-              Obx(() => _PasswordField(
-                label: 'New Password',
-                controller: controller.newPassCtrl,
-                showPass: controller.showNewPass.value,
-                onToggle: () => controller.showNewPass.toggle(),
-              )),
+              Obx(
+                () => _PasswordField(
+                  label: 'New Password',
+                  controller: controller.newPassCtrl,
+                  showPass: controller.showNewPass.value,
+                  onToggle: () => controller.showNewPass.toggle(),
+                ),
+              ),
               const SizedBox(height: 12),
-              Obx(() => _PasswordField(
-                label: 'Confirm New Password',
-                controller: controller.confPassCtrl,
-                showPass: controller.showConfPass.value,
-                onToggle: () => controller.showConfPass.toggle(),
-              )),
+              Obx(
+                () => _PasswordField(
+                  label: 'Confirm New Password',
+                  controller: controller.confPassCtrl,
+                  showPass: controller.showConfPass.value,
+                  onToggle: () => controller.showConfPass.toggle(),
+                ),
+              ),
               const SizedBox(height: 24),
 
-              Obx(() => GestureDetector(
-                onTap: controller.isChangingPass.value
-                    ? null
-                    : () => controller.changePassword(context),
-                child: Container(
-                  width: double.infinity,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: AppColors.dark,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Center(
-                    child: controller.isChangingPass.value
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+              Obx(
+                () => GestureDetector(
+                  onTap: controller.isChangingPass.value
+                      ? null
+                      : () => controller.changePassword(context),
+                  child: Container(
+                    width: double.infinity,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: AppColors.dark,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Center(
+                      child: controller.isChangingPass.value
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              'Update Password',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
                             ),
-                          )
-                        : Text(
-                            'Update Password',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
+                    ),
                   ),
                 ),
-              )),
+              ),
 
               const SizedBox(height: 24),
               const Divider(color: AppColors.border),
@@ -535,14 +595,12 @@ class ProfileScreen extends StatelessWidget {
               _PrivacyInfoRow(
                 icon: Icons.location_off_outlined,
                 title: 'Location Privacy',
-                subtitle:
-                    'Location data is only used for vehicle tracking',
+                subtitle: 'Location data is only used for vehicle tracking',
               ),
               _PrivacyInfoRow(
                 icon: Icons.delete_outline_rounded,
                 title: 'Data Deletion',
-                subtitle:
-                    'You can request data deletion by contacting support',
+                subtitle: 'You can request data deletion by contacting support',
               ),
             ],
           ),
@@ -724,12 +782,13 @@ class _SheetInputField extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
             decoration: InputDecoration(
-              prefixIcon:
-                  Icon(icon, color: AppColors.textTertiary, size: 18),
+              prefixIcon: Icon(icon, color: AppColors.textTertiary, size: 18),
               border: InputBorder.none,
               counterText: '',
               contentPadding: const EdgeInsets.symmetric(
-                  vertical: 14, horizontal: 14),
+                vertical: 14,
+                horizontal: 14,
+              ),
             ),
           ),
         ),
@@ -779,8 +838,11 @@ class _PasswordField extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
             decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.lock_outline_rounded,
-                  color: AppColors.textTertiary, size: 18),
+              prefixIcon: const Icon(
+                Icons.lock_outline_rounded,
+                color: AppColors.textTertiary,
+                size: 18,
+              ),
               suffixIcon: GestureDetector(
                 onTap: onToggle,
                 child: Icon(
@@ -793,7 +855,9 @@ class _PasswordField extends StatelessWidget {
               ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
-                  vertical: 14, horizontal: 14),
+                vertical: 14,
+                horizontal: 14,
+              ),
             ),
           ),
         ),
@@ -896,8 +960,13 @@ class _HelpItem extends StatelessWidget {
                 color: AppColors.bg,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon,
-                  color: isComingSoon ? AppColors.textTertiary : AppColors.textSecondary, size: 20),
+              child: Icon(
+                icon,
+                color: isComingSoon
+                    ? AppColors.textTertiary
+                    : AppColors.textSecondary,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -911,13 +980,18 @@ class _HelpItem extends StatelessWidget {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: isComingSoon ? AppColors.textTertiary : AppColors.textPrimary,
+                          color: isComingSoon
+                              ? AppColors.textTertiary
+                              : AppColors.textPrimary,
                         ),
                       ),
                       if (isComingSoon) ...[
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.bg,
                             borderRadius: BorderRadius.circular(4),
@@ -944,8 +1018,13 @@ class _HelpItem extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded,
-                size: 13, color: isComingSoon ? AppColors.textTertiary.withOpacity(0.3) : AppColors.textTertiary),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 13,
+              color: isComingSoon
+                  ? AppColors.textTertiary.withOpacity(0.3)
+                  : AppColors.textTertiary,
+            ),
           ],
         ),
       ),
@@ -1103,14 +1182,17 @@ class _MenuItem extends StatelessWidget {
                           color: isDestructive
                               ? AppColors.red
                               : isComingSoon
-                                  ? AppColors.textTertiary
-                                  : AppColors.textPrimary,
+                              ? AppColors.textTertiary
+                              : AppColors.textPrimary,
                         ),
                       ),
                       if (isComingSoon) ...[
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.bg,
                             borderRadius: BorderRadius.circular(4),
@@ -1134,8 +1216,7 @@ class _MenuItem extends StatelessWidget {
             // Static trailing
             if (trailing != null && !isComingSoon) ...[
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.purpleSoft,
                   borderRadius: BorderRadius.circular(10),
@@ -1154,33 +1235,35 @@ class _MenuItem extends StatelessWidget {
 
             // Reactive trailing from API
             if (trailingObs != null && !isComingSoon) ...[
-              Obx(() => trailingObs!.value > 0
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.purpleSoft,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '${trailingObs!.value}',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.purple,
+              Obx(
+                () => trailingObs!.value > 0
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
                         ),
-                      ),
-                    )
-                  : const SizedBox.shrink()),
+                        decoration: BoxDecoration(
+                          color: AppColors.purpleSoft,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${trailingObs!.value}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.purple,
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
               const SizedBox(width: 6),
             ],
 
             Icon(
               Icons.arrow_forward_ios_rounded,
               size: 13,
-              color: isDestructive
-                  ? AppColors.red
-                  : AppColors.textTertiary,
+              color: isDestructive ? AppColors.red : AppColors.textTertiary,
             ),
           ],
         ),

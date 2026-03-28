@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:outrace/modules/home/presentation/controller/home_controller.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../theme/app_theme.dart';
@@ -18,350 +17,648 @@ class TripsScreen extends StatelessWidget {
     final topPad = MediaQuery.of(context).padding.top;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return SingleChildScrollView(
-      controller: homeController.tripsScrollController,
-      padding: const EdgeInsets.only(bottom: 100),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── HEADER ───────────────────────────────────────────────────────
-          SizedBox(
-            height: topPad + 230,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned.fill(
-                  child: Container(color: const Color(0xFF1E2632)),
-                ),
-                Positioned(
-                  right: -30,
-                  top: topPad - 10,
-                  child: Opacity(
-                    opacity: 0.1,
-                    child: Image.asset(
-                      'assets/images/bmw_logo.png',
-                      width: 260,
-                      fit: BoxFit.contain,
-                      errorBuilder: (c, e, s) => const SizedBox.shrink(),
-                    ),
+    return RefreshIndicator(
+      onRefresh: () => controller.fetchTrips(forceRefresh: true),
+      color: AppColors.purple,
+      child: SingleChildScrollView(
+        controller: homeController.tripsScrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 100),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── HEADER ───────────────────────────────────────────────────────
+            // Reduced height: was topPad+190, now topPad+170
+            SizedBox(
+              height: topPad + 170,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned.fill(
+                    child: Container(color: const Color(0xFF1E2632)),
                   ),
-                ),
-                Positioned(
-                  top: topPad + 24,
-                  left: 20,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Trip History',
-                          style: GoogleFonts.plusJakartaSans(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white)),
-                      Text('Report',
-                          style: GoogleFonts.plusJakartaSans(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white)),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: 80,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius:
-                          BorderRadius.only(topLeft: Radius.circular(55)),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: 10,
-                  right: -15,
-                  child: Image.asset(
-                    'assets/images/bmw_x6.png',
-                    width: screenWidth * 0.78,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ── WHITE CONTENT AREA ────────────────────────────────────────────
-          Container(
-            color: Colors.white,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 10),
-
-                // ── RUNNING REPORT CARD ──────────────────────────────────────
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: const Color(0xFFF0F0F0)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
+                  Positioned(
+                    right: -30,
+                    top: topPad - 10,
+                    child: Opacity(
+                      opacity: 0.1,
+                      child: Image.asset(
+                        'assets/images/bmw_logo.png',
+                        width: 220,
+                        fit: BoxFit.contain,
+                        errorBuilder: (c, e, s) => const SizedBox.shrink(),
                       ),
-                    ],
+                    ),
                   ),
-                  child: Column(
-                    children: [
-                      // Header: title (Expanded) + icon buttons (fixed width)
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                  Positioned(
+                    top: topPad + 18,
+                    left: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Trip History',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          'Report',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // White rounded bottom strip — smaller overlap
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 50,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(48),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Car — sits lower so less empty space below it
+                  Positioned(
+                    bottom: 0,
+                    right: -15,
+                    child: Image.asset(
+                      'assets/images/bmw_x6.png',
+                      width: screenWidth * 0.72,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── WHITE CONTENT AREA ────────────────────────────────────────────
+            Container(
+              color: Colors.white,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 5),
+
+                  // ── RUNNING REPORT CARD ──────────────────────────────────────
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFF0F0F0)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        // Header row
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'OVER ALL SUMMARY',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Obx(
+                                    () => Text(
+                                      'Total Trips : ${controller.summary['totalTrips'] ?? 0}',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12,
+                                        color: AppColors.textTertiary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  'OVER ALL SUMMARY',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textPrimary,
-                                  ),
+                                _CircleIconBtn(
+                                  icon: Icons.file_download_outlined,
+                                  onTap: () => controller.downloadReport(),
                                 ),
-                                const SizedBox(height: 4),
-                                Obx(() => Text(
-                                  'Total Trips : ${controller.summary['totalTrips'] ?? 0}',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 13,
-                                    color: AppColors.textTertiary,
-                                  ),
-                                )),
+                                const SizedBox(width: 8),
+                                _CircleIconBtn(
+                                  icon: Icons.share_outlined,
+                                  onTap: () => controller.shareReport(),
+                                ),
                               ],
                             ),
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _CircleIconBtn(
-                                icon: Icons.file_download_outlined,
-                                onTap: () => controller.downloadReport(),
-                              ),
-                              const SizedBox(width: 10),
-                              _CircleIconBtn(
-                                icon: Icons.share_outlined,
-                                onTap: () => controller.shareReport(),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
 
-                      const SizedBox(height: 20),
+                        const SizedBox(height: 10),
 
-                      // Stats: icon stacked above value, FittedBox prevents overflow
-                      Obx(() => IntrinsicHeight(
+                        // Stats row
+                        Obx(
+                          () => IntrinsicHeight(
                             child: Row(
                               children: [
                                 Expanded(
                                   child: _ReportStat(
                                     icon: Icons.access_time_rounded,
                                     label: 'Time Spend',
-                                    value: controller.summary
-                                            .containsKey('totalDuration')
+                                    value:
+                                        controller.summary.containsKey(
+                                          'totalDuration',
+                                        )
                                         ? controller.formatDuration(
-                                            controller.summary['totalDuration'])
+                                            controller.summary['totalDuration'],
+                                          )
                                         : '0h 0m',
                                   ),
                                 ),
-                                VerticalDivider(
+                                const VerticalDivider(
                                   width: 1,
                                   thickness: 1,
-                                  color: const Color(0xFFEEEEEE),
+                                  color: Color(0xFFEEEEEE),
                                 ),
                                 Expanded(
                                   child: _ReportStat(
-                                    icon: Icons.map_outlined,
+                                    assetIcon: 'assets/icons/mileage.png',
                                     label: 'Mileage',
-                                    value: controller.summary
-                                            .containsKey('totalDistance')
+                                    value:
+                                        controller.summary.containsKey(
+                                          'totalDistance',
+                                        )
                                         ? '${(controller.summary['totalDistance'] as num).toStringAsFixed(1)} km'
                                         : '0.0 km',
                                   ),
                                 ),
-                           
                               ],
                             ),
-                          )),
-                    ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 10),
 
-                // ── VEHICLE TYPE FILTER ──────────────────────────────────────
-                Obx(() => SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: controller.vehicleTypes.map((type) {
-                          final isSelected =
-                              controller.selectedVehicleType.value == type;
-                          return GestureDetector(
-                            onTap: () => controller.setVehicleTypeFilter(type),
-                            child: Container(
-                              margin: const EdgeInsets.only(right: 10),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.purple
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected
-                                      ? AppColors.purple
-                                      : const Color(0xFFF0F0F0),
+                  // ── SORT & FILTER ROW ──────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            // SORT
+                            Expanded(
+                              child: Obx(
+                                () => GestureDetector(
+                                  onTap: () =>
+                                      _showSortMenu(context, controller),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF9FAFB),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: const Color(0xFFE5E7EB),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.sort_rounded,
+                                          color: AppColors.purple,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            controller.selectedSort.value,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const Icon(
+                                          Icons.keyboard_arrow_down_rounded,
+                                          color: AppColors.textSecondary,
+                                          size: 18,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                                boxShadow: isSelected
-                                    ? [
-                                        BoxShadow(
-                                          color: AppColors.purple
-                                              .withOpacity(0.3),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        )
-                                      ]
-                                    : [],
                               ),
-                              child: Text(
-                                type,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 10),
+                            // FILTER
+                            Expanded(
+                              child: Obx(
+                                () => GestureDetector(
+                                  onTap: () =>
+                                      _showFilterSheet(context, controller),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF9FAFB),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: const Color(0xFFE5E7EB),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.filter_list_rounded,
+                                          color: AppColors.purple,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            controller
+                                                            .selectedVehicleType
+                                                            .value ==
+                                                        'All' &&
+                                                    controller
+                                                            .selectedVehicleReg
+                                                            .value ==
+                                                        'All Vehicles'
+                                                ? 'Filter By'
+                                                : 'Filtered',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const Icon(
+                                          Icons.keyboard_arrow_down_rounded,
+                                          color: AppColors.textSecondary,
+                                          size: 18,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // Clear filter option
+                        Obx(() {
+                          final hasFilter =
+                              controller.selectedVehicleType.value != 'All' ||
+                              controller.selectedVehicleReg.value !=
+                                  'All Vehicles';
+                          if (!hasFilter) return const SizedBox.shrink();
+
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: InkWell(
+                              onTap: () => controller.clearFilters(),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  const Icon(
+                                    Icons.close_rounded,
+                                    size: 14,
+                                    color: AppColors.red,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Clear Filters',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.red,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
-                        }).toList(),
-                      ),
-                    )),
+                        }),
+                      ],
+                    ),
+                  ),
 
-                const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
-                // ── VEHICLE REGISTRATION FILTER ──────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Obx(() => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF9FAFB),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: controller.selectedVehicleReg.value,
-                            isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                                color: AppColors.textSecondary),
+                  // ── TRIP LIST ────────────────────────────────────────────────
+                  Obx(() {
+                    if (controller.isLoading.value) {
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: 5,
+                        padding: const EdgeInsets.only(bottom: 10),
+                        itemBuilder: (context, index) =>
+                            const _ShimmerTripItem(),
+                      );
+                    }
+                    if (controller.filteredTrips.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 30),
+                        child: Center(
+                          child: Text(
+                            'No trip history found',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: AppColors.textTertiary,
                             ),
-                            onChanged: (val) =>
-                                controller.setVehicleRegFilter(val),
-                            items: controller.vehicleRegNumbers.map((reg) {
-                              return DropdownMenuItem(
-                                value: reg,
-                                child: Text(reg),
-                              );
-                            }).toList(),
                           ),
                         ),
-                      )),
-                ),
-
-                const SizedBox(height: 24),
-
-                // ── TRIP LIST ────────────────────────────────────────────────
-                Obx(() {
-                  if (controller.isLoading.value) {
+                      );
+                    }
                     return ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: 5,
-                      padding: const EdgeInsets.only(bottom: 20),
-                      itemBuilder: (context, index) =>
-                          const _ShimmerTripItem(),
+                      itemCount: controller.filteredTrips.length,
+                      padding: const EdgeInsets.only(bottom: 10),
+                      itemBuilder: (context, index) {
+                        final trip = controller.filteredTrips[index];
+                        return GestureDetector(
+                          onTap: () =>
+                              Get.to(() => TripDetailsScreen(trip: trip)),
+                          child: _TripItem(trip: trip),
+                        );
+                      },
                     );
-                  }
-                  if (controller.filteredTrips.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 40),
-                      child: Center(
-                        child: Text(
-                          'No trip history found',
-                          style: GoogleFonts.plusJakartaSans(
-                              color: AppColors.textTertiary),
-                        ),
-                      ),
-                    );
-                  }
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: controller.filteredTrips.length,
-                    padding: const EdgeInsets.only(bottom: 20),
-                    itemBuilder: (context, index) {
-                      final trip = controller.filteredTrips[index];
-                      return GestureDetector(
-                        onTap: () =>
-                            Get.to(() => TripDetailsScreen(trip: trip)),
-                        child: _TripItem(trip: trip),
-                      );
-                    },
-                  );
-                }),
-              ],
+                  }),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSortMenu(BuildContext context, TripsController controller) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Sort Trips By',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...controller.sortOptions.map(
+              (opt) => ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                leading: Icon(
+                  opt == 'Recent Trips'
+                      ? Icons.history_rounded
+                      : Icons.update_rounded,
+                  color: controller.selectedSort.value == opt
+                      ? AppColors.purple
+                      : AppColors.textTertiary,
+                ),
+                title: Text(
+                  opt,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    fontWeight: controller.selectedSort.value == opt
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                    color: controller.selectedSort.value == opt
+                        ? AppColors.purple
+                        : AppColors.textPrimary,
+                  ),
+                ),
+                trailing: controller.selectedSort.value == opt
+                    ? const Icon(
+                        Icons.check_circle_rounded,
+                        color: AppColors.purple,
+                        size: 20,
+                      )
+                    : null,
+                onTap: () {
+                  controller.setSort(opt);
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFilterSheet(BuildContext context, TripsController controller) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Text(
+                'Filter Trips',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Vehicle Type
+            Text(
+              'Vehicle Type',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Obx(
+              () => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: controller.selectedVehicleType.value,
+                    isExpanded: true,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                    onChanged: (val) =>
+                        controller.setVehicleTypeFilter(val ?? 'All'),
+                    items: controller.vehicleTypes.map((type) {
+                      return DropdownMenuItem(value: type, child: Text(type));
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Registration Number
+            Text(
+              'Registration Number',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Obx(
+              () => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: controller.selectedVehicleReg.value,
+                    isExpanded: true,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                    onChanged: (val) => controller.setVehicleRegFilter(val),
+                    items: controller.vehicleRegNumbers.map((reg) {
+                      return DropdownMenuItem(value: reg, child: Text(reg));
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.dark,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  'Apply Filters',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// ── Report Stat Widget ────────────────────────────────────────────────────────
-// KEY FIX: icon above value (Column, not Row) + FittedBox on value text.
-// This prevents the horizontal overflow when time string is long.
 class _ReportStat extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final String? assetIcon;
   final String label;
   final String value;
 
   const _ReportStat({
-    required this.icon,
+    this.icon,
+    this.assetIcon,
     required this.label,
     required this.value,
   });
 
   @override
   Widget build(BuildContext context) {
+    Widget iconWidget;
+
+    if (assetIcon != null) {
+      iconWidget = Image.asset(
+        assetIcon!,
+        width: 18,
+        height: 18,
+        color: AppColors.purple, // optional tint
+      );
+    } else {
+      iconWidget = Icon(
+        icon,
+        size: 18,
+        color: AppColors.purple,
+      );
+    }
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 18, color: AppColors.purple),
-          const SizedBox(height: 6),
+          iconWidget,
+          const SizedBox(height: 5),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
@@ -374,7 +671,7 @@ class _ReportStat extends StatelessWidget {
               maxLines: 1,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             label,
             style: GoogleFonts.plusJakartaSans(
@@ -391,7 +688,6 @@ class _ReportStat extends StatelessWidget {
     );
   }
 }
-
 // ── Circle icon button ────────────────────────────────────────────────────────
 class _CircleIconBtn extends StatelessWidget {
   final IconData icon;
@@ -403,14 +699,14 @@ class _CircleIconBtn extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 40,
-        height: 40,
+        width: 38,
+        height: 38,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(color: const Color(0xFFE0E0E0), width: 1.5),
           color: Colors.white,
         ),
-        child: Icon(icon, size: 17, color: AppColors.textSecondary),
+        child: Icon(icon, size: 16, color: AppColors.textSecondary),
       ),
     );
   }
@@ -424,17 +720,17 @@ class _TripItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFF2F2F2), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -442,16 +738,16 @@ class _TripItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             child: SizedBox(
-              width: 90,
-              height: 75,
+              width: 82,
+              height: 68,
               child: CustomPaint(
                 painter: _MiniMapPainter(path: trip['path'] ?? []),
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,34 +755,36 @@ class _TripItem extends StatelessWidget {
                 Text(
                   trip['time'],
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w500,
                     color: AppColors.textTertiary,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   trip['route'],
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: AppColors.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 6),
-                // Flexible on text children prevents overflow here too
+                const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined,
-                        size: 14, color: AppColors.textTertiary),
-                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 13,
+                      color: AppColors.textTertiary,
+                    ),
+                    const SizedBox(width: 3),
                     Flexible(
                       child: Text(
                         trip['distance'],
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w500,
                           color: AppColors.textTertiary,
                         ),
@@ -494,24 +792,27 @@ class _TripItem extends StatelessWidget {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
                       child: Container(
-                        width: 4,
-                        height: 4,
+                        width: 3,
+                        height: 3,
                         decoration: const BoxDecoration(
                           color: Color(0xFFD0D0D0),
                           shape: BoxShape.circle,
                         ),
                       ),
                     ),
-                    const Icon(Icons.speed_rounded,
-                        size: 14, color: AppColors.textTertiary),
-                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.speed_rounded,
+                      size: 13,
+                      color: AppColors.textTertiary,
+                    ),
+                    const SizedBox(width: 3),
                     Flexible(
                       child: Text(
                         trip['speed'],
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w500,
                           color: AppColors.textTertiary,
                         ),
@@ -536,11 +837,11 @@ class _ShimmerTripItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFF2F2F2), width: 1.5),
       ),
       child: Shimmer.fromColors(
@@ -549,28 +850,31 @@ class _ShimmerTripItem extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 90,
-              height: 75,
+              width: 82,
+              height: 68,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(width: 80, height: 10, color: Colors.white),
-                  const SizedBox(height: 8),
+                  Container(width: 80, height: 9, color: Colors.white),
+                  const SizedBox(height: 7),
                   Container(
-                      width: double.infinity, height: 14, color: Colors.white),
-                  const SizedBox(height: 8),
+                    width: double.infinity,
+                    height: 13,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 7),
                   Row(
                     children: [
-                      Container(width: 60, height: 10, color: Colors.white),
-                      const SizedBox(width: 10),
-                      Container(width: 60, height: 10, color: Colors.white),
+                      Container(width: 55, height: 9, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Container(width: 55, height: 9, color: Colors.white),
                     ],
                   ),
                 ],
@@ -598,16 +902,24 @@ class _MiniMapPainter extends CustomPainter {
     final parkPaint = Paint()..color = const Color(0xFFC8DFB0);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(size.width * 0.05, size.height * 0.05,
-            size.width * 0.35, size.height * 0.38),
+        Rect.fromLTWH(
+          size.width * 0.05,
+          size.height * 0.05,
+          size.width * 0.35,
+          size.height * 0.38,
+        ),
         const Radius.circular(4),
       ),
       parkPaint,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(size.width * 0.58, size.height * 0.55,
-            size.width * 0.38, size.height * 0.38),
+        Rect.fromLTWH(
+          size.width * 0.58,
+          size.height * 0.55,
+          size.width * 0.38,
+          size.height * 0.38,
+        ),
         const Radius.circular(4),
       ),
       parkPaint,
@@ -615,14 +927,20 @@ class _MiniMapPainter extends CustomPainter {
 
     final roadPaint = Paint()
       ..color = Colors.white
-      ..strokeWidth = 6
+      ..strokeWidth = 5
       ..strokeCap = StrokeCap.square;
 
     for (var i = 1; i < 4; i++) {
-      canvas.drawLine(Offset(0, size.height * (i * 0.25)),
-          Offset(size.width, size.height * (i * 0.25)), roadPaint);
-      canvas.drawLine(Offset(size.width * (i * 0.25), 0),
-          Offset(size.width * (i * 0.25), size.height), roadPaint);
+      canvas.drawLine(
+        Offset(0, size.height * (i * 0.25)),
+        Offset(size.width, size.height * (i * 0.25)),
+        roadPaint,
+      );
+      canvas.drawLine(
+        Offset(size.width * (i * 0.25), 0),
+        Offset(size.width * (i * 0.25), size.height),
+        roadPaint,
+      );
     }
 
     if (path.isEmpty) return;
@@ -661,7 +979,7 @@ class _MiniMapPainter extends CustomPainter {
 
     final routePaint = Paint()
       ..color = AppColors.purple
-      ..strokeWidth = 3.5
+      ..strokeWidth = 3
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
@@ -676,20 +994,26 @@ class _MiniMapPainter extends CustomPainter {
     }
     canvas.drawPath(routePath, routePaint);
 
-    canvas.drawCircle(firstPt, 6, Paint()..color = const Color(0xFF1A1A2E));
-    canvas.drawCircle(firstPt, 3, Paint()..color = Colors.white);
+    canvas.drawCircle(firstPt, 5, Paint()..color = const Color(0xFF1A1A2E));
+    canvas.drawCircle(firstPt, 2.5, Paint()..color = Colors.white);
 
     final endPt = toOffset(path.last);
-    canvas.drawCircle(endPt, 6,
-        Paint()
-          ..color = Colors.white
-          ..style = PaintingStyle.fill);
-    canvas.drawCircle(endPt, 6,
-        Paint()
-          ..color = AppColors.purple
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2);
-    canvas.drawCircle(endPt, 2.5, Paint()..color = AppColors.purple);
+    canvas.drawCircle(
+      endPt,
+      5,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawCircle(
+      endPt,
+      5,
+      Paint()
+        ..color = AppColors.purple
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+    canvas.drawCircle(endPt, 2, Paint()..color = AppColors.purple);
   }
 
   @override

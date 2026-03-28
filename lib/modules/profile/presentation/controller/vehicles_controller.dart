@@ -88,7 +88,7 @@ class VehiclesController extends GetxController {
       mapController?.setMapStyle(mapStyle.value);
     }
     // Once map is ready, animate to first vehicle with a location
-    _centerToFirstVehicle();
+    centerToFirstVehicle(force: true);
   }
 
   // ── Called by GoogleMap's onCameraMove ─────────────────────
@@ -118,12 +118,14 @@ class VehiclesController extends GetxController {
   }
 
   // ── Center map on the first vehicle in the list ────────────
-  void _centerToFirstVehicle() {
-    if (mapController == null || vehicles.isEmpty || _hasInitialCentered) return;
+  void centerToFirstVehicle({bool force = false}) {
+    if (mapController == null || vehicles.isEmpty) return;
+    if (!force && _hasInitialCentered) return;
     
     // Use a slight delay to ensure the map is ready for animation
     Future.delayed(const Duration(milliseconds: 800), () {
-      if (mapController == null || vehicles.isEmpty || _hasInitialCentered) return;
+      if (mapController == null || vehicles.isEmpty) return;
+      if (!force && _hasInitialCentered) return;
 
       // 1. Try to find the first ONLINE vehicle with coordinates
       VehicleModel? target = vehicles.firstWhereOrNull(
@@ -222,7 +224,7 @@ class VehiclesController extends GetxController {
       vehicles.value = list;
       await _generateMarkers(zoom: currentZoom.value);
       // If map is already ready, animate to first vehicle
-      _centerToFirstVehicle();
+      centerToFirstVehicle();
     } catch (e) {
       debugPrint('Load Vehicles Error: $e');
       if (Get.context != null) {

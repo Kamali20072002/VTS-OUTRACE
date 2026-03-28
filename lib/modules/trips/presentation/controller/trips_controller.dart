@@ -17,6 +17,10 @@ class TripsController extends GetxController {
   final RxList filteredTrips = [].obs;
   final RxMap summary = {}.obs;
   
+  // Sorting
+  final RxString selectedSort = 'Recent Trips'.obs;
+  final List<String> sortOptions = ['Recent Trips', 'Oldest Trips'];
+  
   // Filters
   final RxList<String> vehicleTypes = <String>['All'].obs;
   final RxString selectedVehicleType = 'All'.obs;
@@ -32,10 +36,12 @@ class TripsController extends GetxController {
     fetchTrips();
   }
 
-  Future<void> fetchTrips() async {
-    isLoading.value = true;
+  Future<void> fetchTrips({bool forceRefresh = false}) async {
+    if (allTrips.isEmpty) {
+      isLoading.value = true;
+    }
     try {
-      final response = await _repository.getMyTrips();
+      final response = await _repository.getMyTrips(forceRefresh: forceRefresh);
       
       // Extract trips list and summary
       final List<dynamic> rawTrips = response['data'] as List<dynamic>? ?? [];
@@ -106,6 +112,13 @@ class TripsController extends GetxController {
 
     if (selectedVehicleReg.value != 'All Vehicles') {
       result = result.where((t) => t['regNo'] == selectedVehicleReg.value).toList();
+    }
+
+    // Apply Sorting
+    if (selectedSort.value == 'Recent Trips') {
+      result.sort((a, b) => b['startTime'].toString().compareTo(a['startTime'].toString()));
+    } else {
+      result.sort((a, b) => a['startTime'].toString().compareTo(b['startTime'].toString()));
     }
 
     filteredTrips.value = result;
@@ -238,4 +251,16 @@ class TripsController extends GetxController {
   }
 
   void setFilter(String filter) => selectedFilter.value = filter;
+
+  void clearFilters() {
+    selectedVehicleType.value = 'All';
+    selectedVehicleReg.value = 'All Vehicles';
+    applyFilters();
+  }
+
+  void setSort(String? sort) {
+    if (sort == null) return;
+    selectedSort.value = sort;
+    applyFilters();
+  }
 }

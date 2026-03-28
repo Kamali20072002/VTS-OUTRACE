@@ -62,7 +62,10 @@ class _HomePage extends StatelessWidget {
     final topPad = MediaQuery.of(context).padding.top;
 
     return RefreshIndicator(
-      onRefresh: () => controller.loadActiveVehicles(),
+      onRefresh: () async {
+        await controller.loadActiveVehicles(forceRefresh: true);
+        await profileController.refreshProfile(forceRefresh: true);
+      },
       displacement: topPad + 20,
       color: AppColors.purple,
       child: SingleChildScrollView(
@@ -644,10 +647,8 @@ class _VehicleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<HomeController>();
-    final bool isMoving = (vehicle.speed ?? 0) > 0;
-    final int? batteryLevel = vehicle.batteryLevel?.toInt();
-    final int batteryBars =
-        batteryLevel != null ? (batteryLevel / 20).clamp(0, 5).toInt() : 0;
+   
+    
 
     return GestureDetector(
       onTap: () => Get.to(() => VehicleDetailsScreen(
@@ -703,6 +704,32 @@ class _VehicleCard extends StatelessWidget {
                       fontSize: 12,
                       color: AppColors.textTertiary,
                     ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: vehicle.isOnline
+                              ? AppColors.green
+                              : AppColors.textTertiary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        vehicle.isOnline ? 'Online' : 'Offline',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: vehicle.isOnline
+                              ? AppColors.green
+                              : AppColors.textTertiary,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
