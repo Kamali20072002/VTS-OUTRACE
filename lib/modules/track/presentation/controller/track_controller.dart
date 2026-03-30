@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../../../core/services/socket_service.dart';
+import '../../../../core/utils/token_storage.dart';
 import '../../../home/presentation/controller/home_controller.dart';
 import '../../../../widgets/map_marker_helper.dart';
 import '../../domain/models/active_vehicle_model.dart';
@@ -21,6 +23,7 @@ class TrackController extends GetxController {
   final RxInt selectedIndex = 0.obs;
   final RxBool isLoading = false.obs;
   final RxBool showSearchDropdown = false.obs;
+  final RxBool isSocketConnected = false.obs;
 
   // ── User Location & Geofencing ───────────────────
   final Rx<LatLng?> userLocation = Rx<LatLng?>(null);
@@ -43,6 +46,7 @@ class TrackController extends GetxController {
   }
 
   Future<void> navigateToVehicle() async {
+    stopGeofencing();
     if (vehicles.isEmpty || selectedIndex.value < 0) return;
     final v = vehicles[selectedIndex.value];
     if (v.latitude != null && v.longitude != null) {
@@ -77,15 +81,21 @@ class TrackController extends GetxController {
       Position position = await Geolocator.getCurrentPosition();
       userLocation.value = LatLng(position.latitude, position.longitude);
       
-      // Animate map to user location
+      // Animate map to user location (zooming in up to the most - level 20)
       mapController?.animateCamera(
-        CameraUpdate.newLatLngZoom(userLocation.value!, 15),
+        CameraUpdate.newLatLngZoom(userLocation.value!, 20),
       );
 
       _startGeofenceAnimation();
     } catch (e) {
       debugPrint('Error getting user location: $e');
     }
+  }
+
+  void stopGeofencing() {
+    _bloomTimer?.cancel();
+    _bloomTimer = null;
+    userLocation.value = null;
   }
 
   void _startGeofenceAnimation() {
@@ -170,6 +180,40 @@ class TrackController extends GetxController {
       debugPrint('Track init from Home Error: $e');
     }
     loadVehicles();
+    _initSocket();
+  }
+
+  Future<void> _initSocket() async {
+    final token = await TokenStorage.getAccessToken();
+    if (token != null) {
+      SocketService.connect(token);
+      
+      // Update local connection status
+      isSocketConnected.value = SocketService.socket?.connected ?? false;
+      
+      SocketService.socket?.on('connect', (_) {
+        isSocketConnected.value = true;
+      });
+
+      SocketService.socket?.on('disconnect', (_) {
+        isSocketConnected.value = false;
+      });
+
+      SocketService.listenForFleet((data) {
+        if (data != null) {
+          // ignore: avoid_print
+          print('🛰️ Incoming Frame: $data');
+          final vehicleUpdate = ActiveVehicleModel.fromJson(data);
+          _updateFromVehicle(vehicleUpdate);
+        }
+      });
+      
+      // If we already have a selected vehicle, start following it
+      if (vehicles.isNotEmpty && selectedIndex.value != -1) {
+        final v = vehicles[selectedIndex.value];
+        SocketService.followDevice(v.deviceId);
+      }
+    }
   }
 
   Future<void> onCameraIdle() async {
@@ -294,6 +338,9 @@ class TrackController extends GetxController {
         curve: Curves.easeInOut,
       );
     }
+    
+    // Start following the selected device via socket for live updates
+    SocketService.followDevice(v.deviceId);
     
     fetchLatestGps(v.deviceId);
   }
@@ -521,6 +568,7 @@ class TrackController extends GetxController {
 
   @override
   void onClose() {
+    SocketService.disconnect();
     _bloomTimer?.cancel();
     mapController?.dispose();
     pageController.dispose();

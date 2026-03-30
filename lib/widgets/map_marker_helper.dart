@@ -114,10 +114,10 @@ class MapMarkerHelper {
     // ── LOGICAL sizes (what you "see" in pts) ────────────────────────
     final double s = _scale(zoom);    // 0.45 – 1.15
 
-    final double outerR  = 38.0 * s; // logical pts (was 42)
-    final double innerR  = 30.0 * s; // (was 34)
-    final double circleR = 23.0 * s; // (was 26)
-    final double imgSize = 40.0 * s; // (was 44)
+    final double outerR  = 40.0 * s; // logical pts (was 38)
+    final double innerR  = 32.0 * s; // (was 30)
+    final double circleR = 25.0 * s; // (was 23)
+    final double imgSize = 42.0 * s; // (was 40)
 
     // Label measurements (TextPainter works in logical px)
     final bool hasModel = model != null && model.isNotEmpty;
@@ -131,13 +131,13 @@ class MapMarkerHelper {
     if (hasModel || hasReg) {
       modelTP = _tp(
         hasModel ? model! : regNumber!,
-        fontSize: 10.5 * s, // (was 11.5)
+        fontSize: 11.0 * s, // (was 10.5)
         weight: FontWeight.w800,
         color: Colors.black,
       );
       regTP = _tp(
         (hasModel && hasReg) ? regNumber! : '',
-        fontSize: 8.5 * s, // (was 9.5)
+        fontSize: 9.0 * s, // (was 8.5)
         weight: FontWeight.w500,
         color: const Color(0xFF888888),
       );
@@ -361,7 +361,7 @@ class MapMarkerHelper {
   // ── Internals ─────────────────────────────────────────────────────────────
 
   static double _scale(double zoom) =>
-      0.40 + ((zoom.clamp(8.0, 20.0) - 8.0) / 12.0) * 0.60;
+      0.45 + ((zoom.clamp(8.0, 20.0) - 8.0) / 12.0) * 0.65;
 
   static Color _baseColor(String type) {
     switch (type.toLowerCase()) {

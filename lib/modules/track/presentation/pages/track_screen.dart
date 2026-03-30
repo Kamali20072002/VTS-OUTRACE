@@ -82,6 +82,7 @@ class _TrackScreenState extends State<TrackScreen> {
             child: Material(
               color: Colors.transparent,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
@@ -170,6 +171,11 @@ class _TrackScreenState extends State<TrackScreen> {
                     ],
                   ),
 
+                  const SizedBox(height: 12),
+                  Obx(() => _LiveStreamingIndicator(
+                        visible: controller.isSocketConnected.value,
+                      )),
+
                   // Search Recommendations Dropdown
                   Obx(() {
                     if (!controller.showSearchDropdown.value) {
@@ -256,7 +262,10 @@ class _TrackScreenState extends State<TrackScreen> {
                 children: [
                   _MapBtn(
                     icon: Icons.layers_rounded,
-                    onTap: controller.toggleMapType,
+                    onTap: () {
+                      controller.stopGeofencing();
+                      controller.toggleMapType();
+                    },
                   ),
                   const SizedBox(height: 6),
                   _MapBtn(
@@ -271,14 +280,20 @@ class _TrackScreenState extends State<TrackScreen> {
                   const SizedBox(height: 6),
                   _MapBtn(
                     icon: Icons.add_rounded,
-                    onTap: () => controller.mapController
-                        ?.animateCamera(CameraUpdate.zoomIn()),
+                    onTap: () {
+                      controller.stopGeofencing();
+                      controller.mapController
+                          ?.animateCamera(CameraUpdate.zoomIn());
+                    },
                   ),
                   const SizedBox(height: 6),
                   _MapBtn(
                     icon: Icons.remove_rounded,
-                    onTap: () => controller.mapController
-                        ?.animateCamera(CameraUpdate.zoomOut()),
+                    onTap: () {
+                      controller.stopGeofencing();
+                      controller.mapController
+                          ?.animateCamera(CameraUpdate.zoomOut());
+                    },
                   ),
                 ],
               ),
@@ -515,6 +530,7 @@ class _TrackScreenState extends State<TrackScreen> {
   }
 }
 
+
 // ── Search Helpers ──────────────────────────────────────────────────────────
 void _onSearchSelect(TrackController controller, dynamic vehicle) {
   controller.searchQuery.value = '';
@@ -539,7 +555,6 @@ class _SearchHeader extends StatelessWidget {
       child: Row(
         children: [
           Icon(Icons.arrow_drop_down_rounded,
-              // ignore: deprecated_member_use
               size: 20,
               color: AppColors.purple.withOpacity(0.7)),
           const SizedBox(width: 4),
@@ -548,7 +563,6 @@ class _SearchHeader extends StatelessWidget {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 11,
               fontWeight: FontWeight.w800,
-              // ignore: deprecated_member_use
               color: AppColors.purple.withOpacity(0.7),
               letterSpacing: 0.5,
             ),
@@ -629,7 +643,6 @@ class _TopBtn extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              // ignore: deprecated_member_use
               color: Colors.black.withOpacity(0.08),
               blurRadius: 8,
             ),
@@ -662,7 +675,6 @@ class _MapBtn extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              // ignore: deprecated_member_use
               color: Colors.black.withOpacity(0.07),
               blurRadius: 6,
             ),
@@ -716,6 +728,133 @@ class _TrackStat extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _LiveStreamingIndicator extends StatefulWidget {
+  final bool visible;
+
+  const _LiveStreamingIndicator({required this.visible});
+
+  @override
+  State<_LiveStreamingIndicator> createState() => _LiveStreamingIndicatorState();
+}
+
+class _LiveStreamingIndicatorState extends State<_LiveStreamingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 500),
+      child: widget.visible
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    // ignore: deprecated_member_use
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const _PulsingDot(),
+                  const SizedBox(width: 8),
+                  AnimatedBuilder(
+                    animation: _controller,
+                    builder: (context, child) {
+                      final dotCount = (_controller.value * 3).floor() + 1;
+                      final dots = '.' * dotCount;
+                      return Opacity(
+                        opacity: 0.7 + (_controller.value * 0.3),
+                        child: Text(
+                          'Live Streaming$dots',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            )
+          : const SizedBox.shrink(),
+    );
+  }
+}
+
+class _PulsingDot extends StatefulWidget {
+  const _PulsingDot();
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: AppColors.green,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.green.withOpacity(0.4),
+                blurRadius: 12 * _controller.value,
+                spreadRadius: 4 * _controller.value,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
