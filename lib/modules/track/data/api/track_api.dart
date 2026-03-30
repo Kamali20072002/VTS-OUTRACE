@@ -9,7 +9,13 @@ class TrackApiCalls {
     return NetworkUtils.getWithCache(
       TrackUrl.activeVehicles,
       forceRefresh: forceRefresh,
-      ttlMinutes: 30, // Vehicle list can be cached for 30 mins
+      ttlMinutes: 1, // Reduced from 30 to 1 min to fix status discrepancy
+    );
+  }
+
+  Future<Map<String, dynamic>> getLatestGps(String deviceId) async {
+    return NetworkUtils.get(
+      TrackUrl.latestGps(deviceId),
     );
   }
 }

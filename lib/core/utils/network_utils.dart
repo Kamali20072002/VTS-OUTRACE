@@ -9,6 +9,28 @@ import 'cache_service.dart';
 import '../../modules/login/presentation/pages/login_screen.dart';
 
 class NetworkUtils {
+  static Future<Map<String, dynamic>> get(
+    String url, {
+    Map<String, String>? headers,
+  }) async {
+    try {
+      final authHeaders = await NetworkUtils.authHeaders();
+      final finalHeaders = {...authHeaders, ...?headers};
+
+      final response = await http
+          .get(Uri.parse(url), headers: finalHeaders)
+          .timeout(const Duration(seconds: 30));
+
+      return handleResponse(response);
+    } on TimeoutException {
+      throw HttpException(408, 'Request timed out. Please try again.');
+    } on http.ClientException {
+      throw HttpException(503, 'Network error. Please check your connection.');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   static Future<Map<String, dynamic>> getWithCache(
     String url, {
     Map<String, String>? headers,

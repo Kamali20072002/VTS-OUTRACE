@@ -11,4 +11,12 @@ class TrackRepository {
         .map((v) => ActiveVehicleModel.fromJson(v as Map<String, dynamic>))
         .toList();
   }
+
+  Future<ActiveVehicleModel?> getLatestGps(String deviceId) async {
+    final json = await _api.getLatestGps(deviceId);
+    if (json['data'] != null) {
+      return ActiveVehicleModel.fromJson(json['data'] as Map<String, dynamic>);
+    }
+    return null;
+  }
 }

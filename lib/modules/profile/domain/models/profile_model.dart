@@ -90,16 +90,24 @@ class VehicleModel {
   });
 
   factory VehicleModel.fromJson(Map<String, dynamic> json) {
-    final device = json['deviceId'] as Map<String, dynamic>?;
+    final deviceData = json['deviceId'];
+    final device = deviceData is Map<String, dynamic> ? deviceData : null;
     final trips = json['recentTrips'] as List<dynamic>?;
+
+    // Standardized status parsing
+    String? rawStatus = json['status']?.toString().trim();
+    if (rawStatus == null || rawStatus.isEmpty || rawStatus == 'null') {
+      rawStatus = device?['status']?.toString().trim();
+    }
+
     return VehicleModel(
       id: json['_id'] as String? ?? '',
       registrationNumber: json['registrationNumber'] as String? ?? '',
       model: json['model'] as String? ?? '',
       type: json['type'] as String? ?? 'CAR',
-      status: device?['status'] as String? ?? 'OFFLINE',
-      batteryLevel: device?['battery_level'] as int? ?? 0,
-      fuelLevel: device?['fuel_level'] as int? ?? 0,
+      status: rawStatus?.toUpperCase() ?? 'OFFLINE',
+      batteryLevel: (device?['battery_level'] as num?)?.toInt() ?? 0,
+      fuelLevel: (device?['fuel_level'] as num?)?.toInt() ?? 0,
       lastSeen: device?['lastSeen'] as String?,
       trackerId: device?['tracker_id'] as String?,
       imei: device?['imei'] as String?,
@@ -107,7 +115,7 @@ class VehicleModel {
       lastLongitude: (device?['last_longitude'] as num?)?.toDouble(),
       lastCourse: (device?['last_course'] as num?)?.toInt(),
       recentTrips: trips != null
-          ? trips.map((t) => RecentTrip.fromJson(t)).toList()
+          ? trips.map((t) => RecentTrip.fromJson(t as Map<String, dynamic>)).toList()
           : null,
     );
   }
@@ -163,8 +171,8 @@ class DeviceModel {
       trackerId: json['tracker_id'] as String? ?? '',
       status: json['status'] as String? ?? 'OFFLINE',
       isActivated: json['isActivated'] as bool? ?? false,
-      batteryLevel: json['battery_level'] as int? ?? 0,
-      fuelLevel: json['fuel_level'] as int? ?? 0,
+      batteryLevel: (json['battery_level'] as num?)?.toInt() ?? 0,
+      fuelLevel: (json['fuel_level'] as num?)?.toInt() ?? 0,
       moduleModel: json['module_model'] as String? ?? '',
       lastSeen: json['lastSeen'] as String?,
     );
@@ -200,9 +208,9 @@ class RecentTrip {
       distance: (json['distance'] as num?)?.toDouble() ?? 0.0,
       duration: (json['duration'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] as String? ?? 'COMPLETED',
-      startLocation: TripPathPoint.fromJson(json['startLocation'] ?? {}),
-      endLocation: TripPathPoint.fromJson(json['endLocation'] ?? {}),
-      path: pathData.map((p) => TripPathPoint.fromJson(p)).toList(),
+      startLocation: TripPathPoint.fromJson(json['startLocation'] is Map ? json['startLocation'] as Map<String, dynamic> : {}),
+      endLocation: TripPathPoint.fromJson(json['endLocation'] is Map ? json['endLocation'] as Map<String, dynamic> : {}),
+      path: pathData.map((p) => TripPathPoint.fromJson(p is Map ? p as Map<String, dynamic> : {})).toList(),
     );
   }
 }
