@@ -30,16 +30,88 @@ class LoginController extends GetxController {
   // ── Tab: 0=login 1=register ────────────────
   final RxInt activeTab                    = 0.obs;
 
+  // ── Validation states ──────────────────────
+  final RxString loginEmailError           = ''.obs;
+  final RxString loginPassError            = ''.obs;
+  final RxString regNameError              = ''.obs;
+  final RxString regEmailError             = ''.obs;
+  final RxString regPhoneError             = ''.obs;
+  final RxString regPassError              = ''.obs;
+
   final LoginRepository _repo = LoginRepository();
 
   @override
   void onInit() {
     super.onInit();
     focusNode.addListener(() => isFocused.value = focusNode.hasFocus);
+    
+    // Listeners for real-time validation
+    emailCtrl.addListener(_validateLogin);
+    passCtrl.addListener(_validateLogin);
+    
+    nameCtrl.addListener(_validateRegister);
+    regEmailCtrl.addListener(_validateRegister);
+    phoneCtrl.addListener(_validateRegister);
+    passwordCtrl.addListener(_validateRegister);
+  }
+
+  void _validateLogin() {
+    final email = emailCtrl.text.trim();
+    final pass = passCtrl.text.trim();
+
+    if (email.isNotEmpty && !email.contains('@')) {
+      loginEmailError.value = 'Invalid email address';
+    } else {
+      loginEmailError.value = '';
+    }
+
+    if (loginMethod.value == 'password' && pass.isNotEmpty && pass.length < 6) {
+      loginPassError.value = 'Password too short';
+    } else {
+      loginPassError.value = '';
+    }
+  }
+
+  void _validateRegister() {
+    final name = nameCtrl.text.trim();
+    final email = regEmailCtrl.text.trim();
+    final phone = phoneCtrl.text.trim();
+    final pass = passwordCtrl.text.trim();
+
+    if (name.isNotEmpty && name.length > 20) {
+      regNameError.value = 'Max 20 characters';
+    } else {
+      regNameError.value = '';
+    }
+
+    if (email.isNotEmpty && !email.contains('@')) {
+      regEmailError.value = 'Invalid email address';
+    } else {
+      regEmailError.value = '';
+    }
+
+    if (phone.isNotEmpty && phone.length != 10) {
+      regPhoneError.value = 'Must be 10 digits';
+    } else {
+      regPhoneError.value = '';
+    }
+
+    if (pass.isNotEmpty && pass.length < 6) {
+      regPassError.value = 'Min 6 characters';
+    } else {
+      regPassError.value = '';
+    }
   }
 
   @override
   void onClose() {
+    emailCtrl.removeListener(_validateLogin);
+    passCtrl.removeListener(_validateLogin);
+    nameCtrl.removeListener(_validateRegister);
+    regEmailCtrl.removeListener(_validateRegister);
+    phoneCtrl.removeListener(_validateRegister);
+    passwordCtrl.removeListener(_validateRegister);
+    
     emailCtrl.dispose();
     passCtrl.dispose();
     nameCtrl.dispose();

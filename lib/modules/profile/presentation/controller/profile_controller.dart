@@ -42,6 +42,12 @@ class ProfileController extends GetxController {
   final RxBool isActivatingDevice = false.obs;
   final RxBool isAddingVehicle    = false.obs;
 
+  // ── Validation states ──────────────────────
+  final RxBool isProfileChanged    = false.obs;
+  final RxString profileError      = ''.obs;
+  final RxBool isPasswordChanged   = false.obs;
+  final RxString passwordError     = ''.obs;
+
   // ── Edit profile controllers ───────────────
   final TextEditingController nameEditCtrl  = TextEditingController();
   final TextEditingController phoneEditCtrl = TextEditingController();
@@ -66,6 +72,71 @@ class ProfileController extends GetxController {
     super.onInit();
     refreshProfile();
     loadMyDevices();
+
+    // Listeners for change detection and validation
+    nameEditCtrl.addListener(_validateProfile);
+    phoneEditCtrl.addListener(_validateProfile);
+    
+    oldPassCtrl.addListener(_validatePassword);
+    newPassCtrl.addListener(_validatePassword);
+    confPassCtrl.addListener(_validatePassword);
+  }
+
+  void _validateProfile() {
+    final n = nameEditCtrl.text.trim();
+    final p = phoneEditCtrl.text.trim();
+
+    // Change detection
+    isProfileChanged.value = n != name.value || p != phone.value;
+
+    // Validation
+    if (n.isEmpty) {
+      profileError.value = 'Name cannot be empty';
+    } else if (n.length > 20) {
+      profileError.value = 'Name must be max 20 characters';
+    } else if (p.isNotEmpty && p.length != 10) {
+      profileError.value = 'Phone number must be 10 digits';
+    } else {
+      profileError.value = '';
+    }
+  }
+
+  void _validatePassword() {
+    final old = oldPassCtrl.text;
+    final n = newPassCtrl.text;
+    final c = confPassCtrl.text;
+
+    isPasswordChanged.value = old.isNotEmpty || n.isNotEmpty || c.isNotEmpty;
+
+    if (old.isEmpty && (n.isNotEmpty || c.isNotEmpty)) {
+      passwordError.value = 'Current password is required';
+    } else if (n.isNotEmpty && n.length < 6) {
+      passwordError.value = 'New password must be at least 6 characters';
+    } else if (n.isNotEmpty && c.isNotEmpty && n != c) {
+      passwordError.value = 'Passwords do not match';
+    } else {
+      passwordError.value = '';
+    }
+  }
+
+  @override
+  void onClose() {
+    nameEditCtrl.removeListener(_validateProfile);
+    phoneEditCtrl.removeListener(_validateProfile);
+    oldPassCtrl.removeListener(_validatePassword);
+    newPassCtrl.removeListener(_validatePassword);
+    confPassCtrl.removeListener(_validatePassword);
+    
+    nameEditCtrl.dispose();
+    phoneEditCtrl.dispose();
+    oldPassCtrl.dispose();
+    newPassCtrl.dispose();
+    confPassCtrl.dispose();
+    
+    regNoCtrl.dispose();
+    vModelCtrl.dispose();
+    imeiCtrl.dispose();
+    super.onClose();
   }
 
   // ── Load profile ───────────────────────────

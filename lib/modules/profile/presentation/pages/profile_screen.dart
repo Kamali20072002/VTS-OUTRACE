@@ -424,59 +424,72 @@ class ProfileScreen extends StatelessWidget {
         ),
         child: _BottomSheet(
           title: 'Edit Profile',
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _SheetInputField(
-                label: 'Full Name',
-                controller: controller.nameEditCtrl,
-                icon: Icons.person_outline_rounded,
-              ),
-              const SizedBox(height: 14),
-              _SheetInputField(
-                label: 'Phone Number',
-                controller: controller.phoneEditCtrl,
-                icon: Icons.phone_outlined,
-                inputType: TextInputType.phone,
-                maxLength: 10,
-              ),
-              const SizedBox(height: 24),
-              Obx(
-                () => GestureDetector(
-                  onTap: controller.isUpdating.value
-                      ? null
-                      : () => controller.updateProfile(context),
-                  child: Container(
-                    width: double.infinity,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: AppColors.purple,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Center(
-                      child: controller.isUpdating.value
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              'Save Changes',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                    ),
-                  ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Obx(() => _SheetInputField(
+                  label: 'Full Name',
+                  controller: controller.nameEditCtrl,
+                  icon: Icons.person_outline_rounded,
+                  errorText: controller.profileError.value.contains('Name') 
+                      ? controller.profileError.value 
+                      : null,
+                )),
+                const SizedBox(height: 14),
+                Obx(() => _SheetInputField(
+                  label: 'Phone Number',
+                  controller: controller.phoneEditCtrl,
+                  icon: Icons.phone_outlined,
+                  inputType: TextInputType.phone,
+                  maxLength: 10,
+                  errorText: controller.profileError.value.contains('Phone') 
+                      ? controller.profileError.value 
+                      : null,
+                )),
+                const SizedBox(height: 24),
+                Obx(
+                  () {
+                    final isEnabled = controller.isProfileChanged.value && 
+                                    controller.profileError.value.isEmpty && 
+                                    !controller.isUpdating.value;
+                    
+                    return GestureDetector(
+                      onTap: isEnabled ? () => controller.updateProfile(context) : null,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: double.infinity,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: isEnabled ? AppColors.purple : AppColors.border,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Center(
+                          child: controller.isUpdating.value
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  'Save Changes',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: isEnabled ? Colors.white : AppColors.textTertiary,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -495,114 +508,130 @@ class ProfileScreen extends StatelessWidget {
         ),
         child: _BottomSheet(
           title: 'Privacy & Security',
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Change password section
-              Text(
-                'Change Password',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 14),
-
-              Obx(
-                () => _PasswordField(
-                  label: 'Current Password',
-                  controller: controller.oldPassCtrl,
-                  showPass: controller.showOldPass.value,
-                  onToggle: () => controller.showOldPass.toggle(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Obx(
-                () => _PasswordField(
-                  label: 'New Password',
-                  controller: controller.newPassCtrl,
-                  showPass: controller.showNewPass.value,
-                  onToggle: () => controller.showNewPass.toggle(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Obx(
-                () => _PasswordField(
-                  label: 'Confirm New Password',
-                  controller: controller.confPassCtrl,
-                  showPass: controller.showConfPass.value,
-                  onToggle: () => controller.showConfPass.toggle(),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              Obx(
-                () => GestureDetector(
-                  onTap: controller.isChangingPass.value
-                      ? null
-                      : () => controller.changePassword(context),
-                  child: Container(
-                    width: double.infinity,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: AppColors.dark,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Center(
-                      child: controller.isChangingPass.value
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              'Update Password',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                    ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Change password section
+                Text(
+                  'Change Password',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 24),
-              const Divider(color: AppColors.border),
-              const SizedBox(height: 16),
-
-              // Privacy info section
-              Text(
-                'Privacy Information',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                const SizedBox(height: 14),
+  
+                Obx(
+                  () => _PasswordField(
+                    label: 'Current Password',
+                    controller: controller.oldPassCtrl,
+                    showPass: controller.showOldPass.value,
+                    onToggle: () => controller.showOldPass.toggle(),
+                    errorText: controller.passwordError.value.contains('Current') 
+                        ? controller.passwordError.value 
+                        : null,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              _PrivacyInfoRow(
-                icon: Icons.shield_outlined,
-                title: 'Data Encryption',
-                subtitle: 'All your data is encrypted with 256-bit SSL',
-              ),
-              _PrivacyInfoRow(
-                icon: Icons.location_off_outlined,
-                title: 'Location Privacy',
-                subtitle: 'Location data is only used for vehicle tracking',
-              ),
-              _PrivacyInfoRow(
-                icon: Icons.delete_outline_rounded,
-                title: 'Data Deletion',
-                subtitle: 'You can request data deletion by contacting support',
-              ),
-            ],
+                const SizedBox(height: 12),
+                Obx(
+                  () => _PasswordField(
+                    label: 'New Password',
+                    controller: controller.newPassCtrl,
+                    showPass: controller.showNewPass.value,
+                    onToggle: () => controller.showNewPass.toggle(),
+                    errorText: controller.passwordError.value.contains('New') 
+                        ? controller.passwordError.value 
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Obx(
+                  () => _PasswordField(
+                    label: 'Confirm New Password',
+                    controller: controller.confPassCtrl,
+                    showPass: controller.showConfPass.value,
+                    onToggle: () => controller.showConfPass.toggle(),
+                    errorText: controller.passwordError.value.contains('match') 
+                        ? controller.passwordError.value 
+                        : null,
+                  ),
+                ),
+                const SizedBox(height: 24),
+  
+                Obx(
+                  () {
+                    final isEnabled = controller.isPasswordChanged.value && 
+                                    controller.passwordError.value.isEmpty && 
+                                    !controller.isChangingPass.value;
+                    
+                    return GestureDetector(
+                      onTap: isEnabled ? () => controller.changePassword(context) : null,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: double.infinity,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: isEnabled ? AppColors.dark : AppColors.border,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Center(
+                          child: controller.isChangingPass.value
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  'Update Password',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: isEnabled ? Colors.white : AppColors.textTertiary,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+  
+                const SizedBox(height: 24),
+                const Divider(color: AppColors.border),
+                const SizedBox(height: 16),
+  
+                // Privacy info section
+                Text(
+                  'Privacy Information',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _PrivacyInfoRow(
+                  icon: Icons.shield_outlined,
+                  title: 'Data Encryption',
+                  subtitle: 'All your data is encrypted with 256-bit SSL',
+                ),
+                _PrivacyInfoRow(
+                  icon: Icons.location_off_outlined,
+                  title: 'Location Privacy',
+                  subtitle: 'Location data is only used for vehicle tracking',
+                ),
+                _PrivacyInfoRow(
+                  icon: Icons.delete_outline_rounded,
+                  title: 'Data Deletion',
+                  subtitle: 'You can request data deletion by contacting support',
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -742,6 +771,7 @@ class _SheetInputField extends StatelessWidget {
   final IconData icon;
   final TextInputType inputType;
   final int? maxLength;
+  final String? errorText;
 
   const _SheetInputField({
     required this.label,
@@ -749,6 +779,7 @@ class _SheetInputField extends StatelessWidget {
     required this.icon,
     this.inputType = TextInputType.text,
     this.maxLength,
+    this.errorText,
   });
 
   @override
@@ -768,7 +799,10 @@ class _SheetInputField extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border, width: 1.5),
+            border: Border.all(
+              color: errorText != null ? AppColors.red : AppColors.border,
+              width: 1.5,
+            ),
           ),
           child: TextField(
             controller: controller,
@@ -792,6 +826,17 @@ class _SheetInputField extends StatelessWidget {
             ),
           ),
         ),
+        if (errorText != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            errorText!,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              color: AppColors.red,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -803,12 +848,14 @@ class _PasswordField extends StatelessWidget {
   final TextEditingController controller;
   final bool showPass;
   final VoidCallback onToggle;
+  final String? errorText;
 
   const _PasswordField({
     required this.label,
     required this.controller,
     required this.showPass,
     required this.onToggle,
+    this.errorText,
   });
 
   @override
@@ -828,7 +875,10 @@ class _PasswordField extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border, width: 1.5),
+            border: Border.all(
+              color: errorText != null ? AppColors.red : AppColors.border,
+              width: 1.5,
+            ),
           ),
           child: TextField(
             controller: controller,
@@ -838,17 +888,12 @@ class _PasswordField extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
             decoration: InputDecoration(
-              prefixIcon: const Icon(
-                Icons.lock_outline_rounded,
-                color: AppColors.textTertiary,
-                size: 18,
-              ),
+              prefixIcon: const Icon(Icons.lock_outline_rounded,
+                  color: AppColors.textTertiary, size: 18),
               suffixIcon: GestureDetector(
                 onTap: onToggle,
                 child: Icon(
-                  showPass
-                      ? Icons.visibility_rounded
-                      : Icons.visibility_off_rounded,
+                  showPass ? Icons.visibility_rounded : Icons.visibility_off_rounded,
                   color: AppColors.textTertiary,
                   size: 18,
                 ),
@@ -861,11 +906,21 @@ class _PasswordField extends StatelessWidget {
             ),
           ),
         ),
+        if (errorText != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            errorText!,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              color: AppColors.red,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ],
     );
   }
 }
-
 // ── Privacy info row ──────────────────────────────────────
 class _PrivacyInfoRow extends StatelessWidget {
   final IconData icon;

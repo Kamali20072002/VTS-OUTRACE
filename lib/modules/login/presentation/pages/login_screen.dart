@@ -232,9 +232,11 @@ Obx(() => Row(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: controller.isFocused.value
-                  ? AppColors.purple
-                  : AppColors.border,
+              color: controller.loginEmailError.value.isNotEmpty
+                  ? AppColors.red
+                  : controller.isFocused.value
+                      ? AppColors.purple
+                      : AppColors.border,
               width: 1.5,
             ),
           ),
@@ -265,6 +267,19 @@ Obx(() => Row(
             ),
           ),
         )),
+        Obx(() => controller.loginEmailError.value.isNotEmpty
+            ? Padding(
+                padding: const EdgeInsets.only(top: 4, left: 4),
+                child: Text(
+                  controller.loginEmailError.value,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    color: AppColors.red,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              )
+            : const SizedBox.shrink()),
 
         // Password field — only show if password method
         Obx(() => controller.loginMethod.value == 'password'
@@ -285,7 +300,11 @@ Obx(() => Row(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                          color: AppColors.border, width: 1.5),
+                        color: controller.loginPassError.value.isNotEmpty
+                            ? AppColors.red
+                            : AppColors.border,
+                        width: 1.5,
+                      ),
                     ),
                     child: TextField(
                       controller: controller.passCtrl,
@@ -324,6 +343,19 @@ Obx(() => Row(
                       ),
                     ),
                   )),
+                  Obx(() => controller.loginPassError.value.isNotEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 4, left: 4),
+                          child: Text(
+                            controller.loginPassError.value,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              color: AppColors.red,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink()),
                 ],
               )
             : const SizedBox.shrink()),
@@ -485,30 +517,33 @@ class _RegisterForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _InputField(
+        Obx(() => _InputField(
           label: 'Full Name',
           hint: 'Enter your full name',
           controller: controller.nameCtrl,
           icon: Icons.person_outline_rounded,
           inputType: TextInputType.name,
-        ),
+          errorText: controller.regNameError.value,
+        )),
         const SizedBox(height: 14),
-        _InputField(
+        Obx(() => _InputField(
           label: 'Email Address',
           hint: 'Enter your email',
           controller: controller.regEmailCtrl,
           icon: Icons.email_outlined,
           inputType: TextInputType.emailAddress,
-        ),
+          errorText: controller.regEmailError.value,
+        )),
         const SizedBox(height: 14),
-        _InputField(
+        Obx(() => _InputField(
           label: 'Phone Number',
           hint: 'Enter your phone number',
           controller: controller.phoneCtrl,
           icon: Icons.phone_outlined,
           inputType: TextInputType.phone,
           maxLength: 10,
-        ),
+          errorText: controller.regPhoneError.value,
+        )),
         const SizedBox(height: 14),
 
         Text(
@@ -523,7 +558,12 @@ class _RegisterForm extends StatelessWidget {
         Obx(() => Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border, width: 1.5),
+            border: Border.all(
+              color: controller.regPassError.value.isNotEmpty
+                  ? AppColors.red
+                  : AppColors.border,
+              width: 1.5,
+            ),
           ),
           child: TextField(
             controller: controller.passwordCtrl,
@@ -561,6 +601,19 @@ class _RegisterForm extends StatelessWidget {
             ),
           ),
         )),
+        Obx(() => controller.regPassError.value.isNotEmpty
+            ? Padding(
+                padding: const EdgeInsets.only(top: 4, left: 4),
+                child: Text(
+                  controller.regPassError.value,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    color: AppColors.red,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              )
+            : const SizedBox.shrink()),
 
         const SizedBox(height: 24),
 
@@ -568,7 +621,8 @@ class _RegisterForm extends StatelessWidget {
           onTap: controller.isRegLoading.value
               ? null
               : () => controller.register(context),
-          child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
             width: double.infinity,
             height: 50,
             decoration: BoxDecoration(
@@ -622,6 +676,7 @@ class _InputField extends StatelessWidget {
   final IconData icon;
   final TextInputType inputType;
   final int? maxLength;
+  final String? errorText;
 
   const _InputField({
     required this.label,
@@ -630,6 +685,7 @@ class _InputField extends StatelessWidget {
     required this.icon,
     this.inputType = TextInputType.text,
     this.maxLength,
+    this.errorText,
   });
 
   @override
@@ -649,7 +705,12 @@ class _InputField extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border, width: 1.5),
+            border: Border.all(
+              color: (errorText?.isNotEmpty ?? false)
+                  ? AppColors.red
+                  : AppColors.border,
+              width: 1.5,
+            ),
           ),
           child: TextField(
             controller: controller,
@@ -668,8 +729,7 @@ class _InputField extends StatelessWidget {
                 fontSize: 14,
                 color: AppColors.textTertiary,
               ),
-              prefixIcon: Icon(icon,
-                  color: AppColors.textTertiary, size: 18),
+              prefixIcon: Icon(icon, color: AppColors.textTertiary, size: 18),
               border: InputBorder.none,
               counterText: '',
               contentPadding: const EdgeInsets.symmetric(
@@ -679,6 +739,18 @@ class _InputField extends StatelessWidget {
             ),
           ),
         ),
+        if (errorText?.isNotEmpty ?? false)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 4),
+            child: Text(
+              errorText!,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                color: AppColors.red,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
       ],
     );
   }

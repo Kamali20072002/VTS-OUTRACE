@@ -169,6 +169,7 @@ class OtpScreen extends StatelessWidget {
                       children: List.generate(4, (i) {
                         final isFilled = controller.ctrls[i].text.isNotEmpty;
                         final isFocused = controller.nodes[i].hasFocus;
+                        final hasError = controller.errorText.value.isNotEmpty;
 
                         return Expanded(
                           child: Container(
@@ -180,12 +181,12 @@ class OtpScreen extends StatelessWidget {
                                   : AppColors.bg,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: isFilled
-                                    ? AppColors.purple
-                                    : isFocused
-                                        ? AppColors.purple
+                                color: hasError 
+                                    ? AppColors.red 
+                                    : (isFilled || isFocused) 
+                                        ? AppColors.purple 
                                         : AppColors.border,
-                                width: isFilled || isFocused ? 2 : 1.5,
+                                width: isFilled || isFocused || hasError ? 2 : 1.5,
                               ),
                             ),
                             child: TextField(
@@ -200,7 +201,7 @@ class OtpScreen extends StatelessWidget {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.purple,
+                                color: hasError ? AppColors.red : AppColors.purple,
                               ),
                               decoration: const InputDecoration(
                                 border: InputBorder.none,
@@ -224,6 +225,28 @@ class OtpScreen extends StatelessWidget {
                       }),
                     ),
                   ),
+                  Obx(() => controller.errorText.value.isNotEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 8, left: 4),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline_rounded,
+                                  color: AppColors.red, size: 14),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  controller.errorText.value,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    color: AppColors.red,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink()),
                   const SizedBox(height: 16),
 
                   // Resend row

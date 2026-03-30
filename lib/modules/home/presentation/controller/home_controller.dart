@@ -127,25 +127,48 @@ class HomeController extends GetxController {
     }
     // ignore: invalid_use_of_protected_member
     homeMarkers.value = markers;
-
-    if (markers.isNotEmpty) {
-      mapCenter = markers.first.position;
-      homeMapController?.animateCamera(
-        CameraUpdate.newLatLng(mapCenter),
-      );
-    }
+    
+    fitMarkers();
     update();
+  }
+
+  void fitMarkers() {
+    if (homeMapController == null || homeMarkers.isEmpty) return;
+
+    if (homeMarkers.length == 1) {
+      homeMapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(homeMarkers.first.position, 15),
+      );
+      return;
+    }
+
+    double minLat = homeMarkers.first.position.latitude;
+    double maxLat = homeMarkers.first.position.latitude;
+    double minLng = homeMarkers.first.position.longitude;
+    double maxLng = homeMarkers.first.position.longitude;
+
+    for (var marker in homeMarkers) {
+      if (marker.position.latitude < minLat) minLat = marker.position.latitude;
+      if (marker.position.latitude > maxLat) maxLat = marker.position.latitude;
+      if (marker.position.longitude < minLng) minLng = marker.position.longitude;
+      if (marker.position.longitude > maxLng) maxLng = marker.position.longitude;
+    }
+
+    final bounds = LatLngBounds(
+      southwest: LatLng(minLat, minLng),
+      northeast: LatLng(maxLat, maxLng),
+    );
+
+    homeMapController?.animateCamera(
+      CameraUpdate.newLatLngBounds(bounds, 50),
+    );
   }
 
   void onHomeMapCreated(GoogleMapController controller) {
     homeMapController = controller;
     // ignore: deprecated_member_use
     homeMapController?.setMapStyle(_mapStyle);
-    if (homeMarkers.isNotEmpty) {
-      homeMapController?.animateCamera(
-        CameraUpdate.newLatLng(homeMarkers.first.position),
-      );
-    }
+    fitMarkers();
     update();
   }
 

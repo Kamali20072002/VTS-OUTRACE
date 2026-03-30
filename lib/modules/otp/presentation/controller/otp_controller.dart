@@ -17,6 +17,7 @@ class OtpController extends GetxController {
   final RxBool   canResend = false.obs;
   final RxString otp       = ''.obs;
   final RxBool   isLoading = false.obs;
+  final RxString errorText = ''.obs;
 
   Timer? _timer;
   final LoginRepository _repo = LoginRepository();
@@ -48,6 +49,7 @@ class OtpController extends GetxController {
   void startTimer() {
     seconds.value = 60;
     canResend.value = false;
+    errorText.value = '';
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (seconds.value == 0) {
@@ -67,23 +69,19 @@ class OtpController extends GetxController {
 
   void onDigitChanged(int index, String value) {
     otp.value = ctrls.map((c) => c.text).join();
+    errorText.value = '';
     if (value.isNotEmpty && index < 3) nodes[index + 1].requestFocus();
     if (value.isEmpty   && index > 0) nodes[index - 1].requestFocus();
   }
 
   Future<void> verify(BuildContext context, String email) async {
     if (otp.value.length < 4) {
-      NotixToast.show(
-        context,
-        type: NotixType.error,
-        title: 'Incomplete OTP',
-        message: 'Please enter the complete 4-digit OTP',
-        position: NotixToastPosition.top,
-      );
+      errorText.value = 'Please enter the complete 4-digit OTP';
       return;
     }
 
     isLoading.value = true;
+    errorText.value = '';
     try {
       final response = await _repo.loginOtp(
         email: email,
@@ -91,14 +89,7 @@ class OtpController extends GetxController {
       );
 
       if (response.error) {
-        NotixToast.show(
-          // ignore: use_build_context_synchronously
-          context,
-          type: NotixType.error,
-          title: 'Invalid OTP',
-          message: response.message,
-          position: NotixToastPosition.top,
-        );
+        errorText.value = response.message;
         return;
       }
 
@@ -133,23 +124,9 @@ class OtpController extends GetxController {
         duration: const Duration(milliseconds: 500),
       );
     } on HttpException catch (e) {
-      NotixToast.show(
-        // ignore: use_build_context_synchronously
-        context,
-        type: NotixType.error,
-        title: 'Error ${e.statusCode}',
-        message: e.message,
-        position: NotixToastPosition.top,
-      );
+      errorText.value = e.message;
     } catch (e) {
-      NotixToast.show(
-        // ignore: use_build_context_synchronously
-        context,
-        type: NotixType.error,
-        title: 'Error',
-        message: 'Something went wrong. Please try again.',
-        position: NotixToastPosition.top,
-      );
+      errorText.value = 'Something went wrong. Please try again.';
     } finally {
       isLoading.value = false;
     }
@@ -157,6 +134,7 @@ class OtpController extends GetxController {
 
   Future<void> resendOtp(BuildContext context, String email) async {
     if (!canResend.value) return;
+    errorText.value = '';
     try {
       final response = await _repo.sendOtp(email);
       NotixToast.show(
@@ -169,23 +147,9 @@ class OtpController extends GetxController {
       );
       startTimer();
     } on HttpException catch (e) {
-      NotixToast.show(
-        // ignore: use_build_context_synchronously
-        context,
-        type: NotixType.error,
-        title: 'Error',
-        message: e.message,
-        position: NotixToastPosition.top,
-      );
+      errorText.value = e.message;
     } catch (e) {
-      NotixToast.show(
-        // ignore: use_build_context_synchronously
-        context,
-        type: NotixType.error,
-        title: 'Error',
-        message: 'Failed to resend OTP.',
-        position: NotixToastPosition.top,
-      );
+      errorText.value = 'Failed to resend OTP.';
     }
   }
 }

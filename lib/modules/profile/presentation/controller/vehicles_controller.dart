@@ -87,8 +87,40 @@ class VehiclesController extends GetxController {
     if (mapStyle.value.isNotEmpty) {
       mapController?.setMapStyle(mapStyle.value);
     }
-    // Once map is ready, animate to first vehicle with a location
-    centerToFirstVehicle(force: true);
+    // Once map is ready, fit all markers
+    fitMarkers();
+  }
+
+  void fitMarkers() {
+    if (mapController == null || markers.isEmpty) return;
+
+    if (markers.length == 1) {
+      mapController?.animateCamera(
+        CameraUpdate.newLatLngZoom(markers.first.position, 15),
+      );
+      return;
+    }
+
+    double minLat = markers.first.position.latitude;
+    double maxLat = markers.first.position.latitude;
+    double minLng = markers.first.position.longitude;
+    double maxLng = markers.first.position.longitude;
+
+    for (var marker in markers) {
+      if (marker.position.latitude < minLat) minLat = marker.position.latitude;
+      if (marker.position.latitude > maxLat) maxLat = marker.position.latitude;
+      if (marker.position.longitude < minLng) minLng = marker.position.longitude;
+      if (marker.position.longitude > maxLng) maxLng = marker.position.longitude;
+    }
+
+    final bounds = LatLngBounds(
+      southwest: LatLng(minLat, minLng),
+      northeast: LatLng(maxLat, maxLng),
+    );
+
+    mapController?.animateCamera(
+      CameraUpdate.newLatLngBounds(bounds, 80),
+    );
   }
 
   // ── Called by GoogleMap's onCameraMove ─────────────────────
@@ -223,8 +255,8 @@ class VehiclesController extends GetxController {
       final list = await _repo.getMyVehicles();
       vehicles.value = list;
       await _generateMarkers(zoom: currentZoom.value);
-      // If map is already ready, animate to first vehicle
-      centerToFirstVehicle();
+      // If map is already ready, fit all markers
+      fitMarkers();
     } catch (e) {
       debugPrint('Load Vehicles Error: $e');
       if (Get.context != null) {

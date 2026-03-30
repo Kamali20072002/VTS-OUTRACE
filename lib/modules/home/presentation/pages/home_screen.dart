@@ -421,6 +421,34 @@ class _HomePage extends StatelessWidget {
                             ),
                           ),
                         ),
+                      // Full screen button
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: GestureDetector(
+                          onTap: () => controller.changeTab(1),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.fullscreen_rounded,
+                              color: AppColors.dark,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                      ),
                       if (markers.isEmpty && !controller.isLoading.value)
                         Center(
                           child: Container(
