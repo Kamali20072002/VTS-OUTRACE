@@ -87,7 +87,32 @@ class ActiveVehicleModel {
     );
   }
 
-  bool get isOnline => status == 'ONLINE';
+  bool get isOnline {
+    if (status == 'ONLINE') return true;
+    if (status == 'OFFLINE') return false;
+
+    // Fallback logic if explicit status is missing
+    if (engineStatus?.toUpperCase() == 'ON' || engineStatus?.toUpperCase() == 'ACTIVE') {
+      return true;
+    }
+    
+    if (speed != null && speed! > 0) {
+      return true;
+    }
+
+    if (timestamp != null) {
+      try {
+        final lastSeen = DateTime.parse(timestamp!).toLocal();
+        final now = DateTime.now();
+        // If the device has communicated within the last 15 minutes, it's considered online
+        if (now.difference(lastSeen).inMinutes <= 15) {
+          return true;
+        }
+      } catch (_) {}
+    }
+
+    return false;
+  }
 
   ActiveVehicleModel copyWith({
     String? id,

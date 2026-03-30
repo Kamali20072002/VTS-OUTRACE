@@ -29,23 +29,24 @@ class HomeScreen extends StatelessWidget {
     // Initialize VehiclesController for search navigation
     Get.put(VehiclesController());
 
-    return Scaffold(
+    return Obx(() => Scaffold(
       backgroundColor: AppColors.white,
       extendBody: true,
-      body: Obx(() => IndexedStack(
-            index: controller.currentIndex.value,
-            children: const [
-              _HomePage(),
-              TrackScreen(),
-              TripsScreen(),
-              ProfileScreen(),
-            ],
-          )),
-      bottomNavigationBar: Obx(() => FloatingNavBar(
-            currentIndex: controller.currentIndex.value,
-            onTap: controller.changeTab,
-          )),
-    );
+      resizeToAvoidBottomInset: controller.currentIndex.value != 1,
+      body: IndexedStack(
+        index: controller.currentIndex.value,
+        children: const [
+          _HomePage(),
+          TrackScreen(),
+          TripsScreen(),
+          ProfileScreen(),
+        ],
+      ),
+      bottomNavigationBar: FloatingNavBar(
+        currentIndex: controller.currentIndex.value,
+        onTap: controller.changeTab,
+      ),
+    ));
   }
 }
 

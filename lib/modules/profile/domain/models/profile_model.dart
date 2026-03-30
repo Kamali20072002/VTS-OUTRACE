@@ -120,7 +120,20 @@ class VehicleModel {
     );
   }
 
-  bool get isOnline => status == 'ONLINE';
+  bool get isOnline {
+    if (status == 'ONLINE') return true;
+    
+    if (lastSeen != null) {
+      try {
+        final last = DateTime.parse(lastSeen!).toLocal();
+        if (DateTime.now().difference(last).inMinutes <= 15) {
+          return true;
+        }
+      } catch (_) {}
+    }
+    
+    return false;
+  }
 
   String get vehicleImage {
     switch (type.toUpperCase()) {
