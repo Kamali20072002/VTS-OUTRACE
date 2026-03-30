@@ -172,8 +172,43 @@ class _TrackScreenState extends State<TrackScreen> {
                   ),
 
                   const SizedBox(height: 12),
-                  Obx(() => _LiveStreamingIndicator(
-                        visible: controller.isSocketConnected.value,
+                  Obx(() => SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        clipBehavior: Clip.none, // Allow shadows to overflow
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
+                          children: [
+                            if (controller.isSocketConnected.value) ...[
+                              _LiveStreamingIndicator(
+                                visible: controller.isSocketConnected.value,
+                              ),
+                              const SizedBox(width: 10),
+                            ],
+                            _FilterChip(
+                              label: 'All',
+                              count: controller.vehicles.length,
+                              isSelected: controller.statusFilter.value == 'ALL',
+                              onTap: () => controller.setStatusFilter('ALL'),
+                            ),
+                            const SizedBox(width: 8),
+                            _FilterChip(
+                              label: 'Online',
+                              color: AppColors.green,
+                              count: controller.vehicles.where((v) => v.isOnline).length,
+                              isSelected: controller.statusFilter.value == 'ONLINE',
+                              onTap: () => controller.setStatusFilter('ONLINE'),
+                            ),
+                            const SizedBox(width: 8),
+                            _FilterChip(
+                              label: 'Offline',
+                              color: AppColors.textSecondary,
+                              count: controller.vehicles.where((v) => !v.isOnline).length,
+                              isSelected: controller.statusFilter.value == 'OFFLINE',
+                              onTap: () => controller.setStatusFilter('OFFLINE'),
+                            ),
+                            const SizedBox(width: 32), // Extra space at end for better scrolling
+                          ],
+                        ),
                       )),
 
                   // Search Recommendations Dropdown
@@ -263,7 +298,7 @@ class _TrackScreenState extends State<TrackScreen> {
                   _MapBtn(
                     icon: Icons.layers_rounded,
                     onTap: () {
-                      controller.stopGeofencing();
+                      controller.stopGeofenceAnimation();
                       controller.toggleMapType();
                     },
                   ),
@@ -281,18 +316,16 @@ class _TrackScreenState extends State<TrackScreen> {
                   _MapBtn(
                     icon: Icons.add_rounded,
                     onTap: () {
-                      controller.stopGeofencing();
-                      controller.mapController
-                          ?.animateCamera(CameraUpdate.zoomIn());
+                      controller.stopGeofenceAnimation();
+                      controller.zoomIn();
                     },
                   ),
                   const SizedBox(height: 6),
                   _MapBtn(
                     icon: Icons.remove_rounded,
                     onTap: () {
-                      controller.stopGeofencing();
-                      controller.mapController
-                          ?.animateCamera(CameraUpdate.zoomOut());
+                      controller.stopGeofenceAnimation();
+                      controller.zoomOut();
                     },
                   ),
                 ],
@@ -790,12 +823,15 @@ class _LiveStreamingIndicatorState extends State<_LiveStreamingIndicator>
                       final dots = '.' * dotCount;
                       return Opacity(
                         opacity: 0.7 + (_controller.value * 0.3),
-                        child: Text(
-                          'Live Streaming$dots',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                        child: SizedBox(
+                          width: 110, // Fixed width to prevent row jumping when dots change
+                          child: Text(
+                            'Live Streaming$dots',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ),
                       );
@@ -855,6 +891,79 @@ class _PulsingDotState extends State<_PulsingDot>
           ),
         );
       },
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final int count;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color? color;
+
+  const _FilterChip({
+    required this.label,
+    required this.count,
+    required this.isSelected,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color activeColor = color ?? AppColors.purple;
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected 
+                  ? activeColor.withOpacity(0.2) 
+                  : Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? Colors.white.withOpacity(0.2) 
+                    : activeColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                count.toString(),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: isSelected ? Colors.white : activeColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

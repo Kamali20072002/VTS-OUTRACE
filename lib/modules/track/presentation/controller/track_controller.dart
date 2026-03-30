@@ -21,6 +21,7 @@ class TrackController extends GetxController {
   final RxList<ActiveVehicleModel> vehicles = <ActiveVehicleModel>[].obs;
   final RxString searchQuery = ''.obs;
   final RxInt selectedIndex = 0.obs;
+  final RxString statusFilter = 'ALL'.obs; // ALL, ONLINE, OFFLINE
   final RxBool isLoading = false.obs;
   final RxBool showSearchDropdown = false.obs;
   final RxBool isSocketConnected = false.obs;
@@ -35,6 +36,15 @@ class TrackController extends GetxController {
     mapType.value = mapType.value == MapType.normal ? MapType.satellite : MapType.normal;
   }
 
+  void setStatusFilter(String filter) {
+    statusFilter.value = filter;
+    selectedIndex.value = 0; // Reset selection to the first in the filtered list
+    _updateMarkers();
+    if (filteredVehicles.isNotEmpty) {
+      fitAllMarkers();
+    }
+  }
+
   void shareVehicleLocation() {
     if (vehicles.isEmpty || selectedIndex.value < 0) return;
     final v = vehicles[selectedIndex.value];
@@ -46,7 +56,7 @@ class TrackController extends GetxController {
   }
 
   Future<void> navigateToVehicle() async {
-    stopGeofencing();
+    stopGeofenceAnimation();
     if (vehicles.isEmpty || selectedIndex.value < 0) return;
     final v = vehicles[selectedIndex.value];
     if (v.latitude != null && v.longitude != null) {
@@ -81,6 +91,9 @@ class TrackController extends GetxController {
       Position position = await Geolocator.getCurrentPosition();
       userLocation.value = LatLng(position.latitude, position.longitude);
       
+      // Update user location marker with heading if available
+      await updateUserLocationMarker(userLocation.value!, position.heading);
+
       // Animate map to user location (zooming in up to the most - level 20)
       mapController?.animateCamera(
         CameraUpdate.newLatLngZoom(userLocation.value!, 20),
@@ -92,10 +105,51 @@ class TrackController extends GetxController {
     }
   }
 
-  void stopGeofencing() {
+  // Call after getUserLocation() resolves
+  Future<void> updateUserLocationMarker(LatLng pos, double heading) async {
+    userLocation.value = pos;
+    final icon = await MapMarkerHelper.createUserLocationMarker(heading: heading);
+    final m = Marker(
+      markerId: const MarkerId('user_location'),
+      position: pos,
+      icon: icon,
+      anchor: const Offset(0.5, 0.5),
+      zIndex: 99,
+    );
+    
+    // RxSet doesn't support indexWhere or []=
+    // We remove the old one by ID and add the updated one
+    markers.removeWhere((x) => x.markerId.value == 'user_location');
+    markers.add(m);
+  }
+
+  void stopGeofenceAnimation() {
     _bloomTimer?.cancel();
     _bloomTimer = null;
+    geofenceRadius.value = 0.0;
+  }
+
+  void stopGeofencing() {
+    stopGeofenceAnimation();
     userLocation.value = null;
+    // Also remove the user location marker
+    markers.removeWhere((m) => m.markerId.value == 'user_location');
+  }
+
+  void zoomIn() {
+    if (userLocation.value != null) {
+      mapController?.animateCamera(CameraUpdate.newLatLngZoom(userLocation.value!, currentZoom.value + 1));
+    } else {
+      mapController?.animateCamera(CameraUpdate.zoomIn());
+    }
+  }
+
+  void zoomOut() {
+    if (userLocation.value != null) {
+      mapController?.animateCamera(CameraUpdate.newLatLngZoom(userLocation.value!, currentZoom.value - 1));
+    } else {
+      mapController?.animateCamera(CameraUpdate.zoomOut());
+    }
   }
 
   void _startGeofenceAnimation() {
@@ -113,12 +167,25 @@ class TrackController extends GetxController {
   }
 
   List<ActiveVehicleModel> get filteredVehicles {
-    if (searchQuery.value.isEmpty) return vehicles;
-    final query = searchQuery.value.toLowerCase();
-    return vehicles.where((v) {
-      return v.model.toLowerCase().contains(query) ||
-          v.registrationNumber.toLowerCase().contains(query);
-    }).toList();
+    var list = vehicles.toList();
+    
+    // Status filter
+    if (statusFilter.value == 'ONLINE') {
+      list = list.where((v) => v.isOnline).toList();
+    } else if (statusFilter.value == 'OFFLINE') {
+      list = list.where((v) => !v.isOnline).toList();
+    }
+
+    // Search query filter
+    if (searchQuery.value.isNotEmpty) {
+      final query = searchQuery.value.toLowerCase();
+      list = list.where((v) {
+        return v.model.toLowerCase().contains(query) ||
+            v.registrationNumber.toLowerCase().contains(query);
+      }).toList();
+    }
+    
+    return list;
   }
 
   final RxBool isEngineOn = true.obs;
@@ -279,27 +346,35 @@ class TrackController extends GetxController {
   }
 
   void fitAllMarkers() {
-    if (markers.isEmpty || mapController == null) return;
+    if (mapController == null) return;
+    
+    final list = filteredVehicles;
+    if (list.isEmpty) {
+      markers.clear();
+      return;
+    }
+    
+    // Filter vehicles with valid positions
+    final validVehicles = list.where((v) => v.latitude != null && v.longitude != null).toList();
+    if (validVehicles.isEmpty) return;
     
     LatLngBounds bounds;
-    // Filter markers with valid positions
-    final validMarkers = markers.where((m) => m.position.latitude != 0 && m.position.longitude != 0).toList();
-    if (validMarkers.isEmpty) return;
 
-    if (validMarkers.length == 1) {
-      final pos = validMarkers.first.position;
+    if (validVehicles.length == 1) {
+      final v = validVehicles.first;
+      final pos = LatLng(v.latitude!, v.longitude!);
       bounds = LatLngBounds(southwest: pos, northeast: pos);
     } else {
-      double minLat = validMarkers.first.position.latitude;
-      double maxLat = validMarkers.first.position.latitude;
-      double minLng = validMarkers.first.position.longitude;
-      double maxLng = validMarkers.first.position.longitude;
+      double minLat = validVehicles.first.latitude!;
+      double maxLat = validVehicles.first.latitude!;
+      double minLng = validVehicles.first.longitude!;
+      double maxLng = validVehicles.first.longitude!;
       
-      for (var m in validMarkers) {
-        if (m.position.latitude < minLat) minLat = m.position.latitude;
-        if (m.position.latitude > maxLat) maxLat = m.position.latitude;
-        if (m.position.longitude < minLng) minLng = m.position.longitude;
-        if (m.position.longitude > maxLng) maxLng = m.position.longitude;
+      for (var v in validVehicles) {
+        if (v.latitude! < minLat) minLat = v.latitude!;
+        if (v.latitude! > maxLat) maxLat = v.latitude!;
+        if (v.longitude! < minLng) minLng = v.longitude!;
+        if (v.longitude! > maxLng) maxLng = v.longitude!;
       }
       bounds = LatLngBounds(
         southwest: LatLng(minLat, minLng),
@@ -325,10 +400,12 @@ class TrackController extends GetxController {
     isEngineOn.value = v.isOnline;
     selectedIndex.value = vehicles.indexWhere((element) => element.deviceId == v.deviceId);
 
-    _updateCameraFromVehicle(v, animate: animate);
+    // No auto zoom in on selected vehicle as per user request
+    // _updateCameraFromVehicle(v, animate: animate);
     
     // We update markers but need to know which deviceId is selected
     _updateMarkers();
+    fitAllMarkers(); // Maintain responsive zoom
     
     // Scroll page if triggered from marker tap
     if (scrollPage && pageController.hasClients) {
@@ -343,20 +420,6 @@ class TrackController extends GetxController {
     SocketService.followDevice(v.deviceId);
     
     fetchLatestGps(v.deviceId);
-  }
-
-  void _updateCameraFromVehicle(ActiveVehicleModel v, {bool animate = true}) {
-    if (v.latitude != null && v.longitude != null) {
-      if (animate) {
-        mapController?.animateCamera(
-          CameraUpdate.newLatLngZoom(LatLng(v.latitude!, v.longitude!), 19),
-        );
-      } else {
-        mapController?.moveCamera(
-          CameraUpdate.newLatLngZoom(LatLng(v.latitude!, v.longitude!), 19),
-        );
-      }
-    }
   }
 
   void _updateFromVehicle(ActiveVehicleModel v) {
@@ -383,11 +446,11 @@ class TrackController extends GetxController {
     if (selectedIndex.value != -1 && vehicles[selectedIndex.value].deviceId == v.deviceId) {
       speed.value = v.speed?.toStringAsFixed(0) ?? '0';
       isEngineOn.value = v.isOnline;
-      _updateCamera();
-      // Removed _addRoute() call
+      // No need to zoom in on a single live moving vehicle as per user request
     }
 
     _updateMarkers();
+    fitAllMarkers(); // Keep map responsive to all plotted devices
   }
 
   Future<void> fetchLatestGps(String deviceId, {bool updateUI = true}) async {
@@ -432,25 +495,26 @@ class TrackController extends GetxController {
     await _updateMarkers();
 
     if (vehicles.isNotEmpty) {
-      if (markers.length > 1) {
+      if (markers.length >= 1) {
         fitAllMarkers();
-      } else {
-        _updateCamera(animate: false);
       }
     }
   }
 
   Future<void> _updateMarkers() async {
-    if (vehicles.isEmpty) {
+    final list = filteredVehicles;
+    if (list.isEmpty) {
       markers.clear();
       return;
     }
     
     // Create markers in parallel for better performance
-    final results = await Future.wait(vehicles.asMap().entries.map((entry) async {
+    final results = await Future.wait(list.asMap().entries.map((entry) async {
       final i = entry.key;
       final v = entry.value;
-      final isSelected = selectedIndex.value == i;
+      // We check if this vehicle is the one currently selected in the FULL vehicles list
+      final isSelected = selectedIndex.value != -1 && vehicles[selectedIndex.value].deviceId == v.deviceId;
+      
       if (v.latitude != null && v.longitude != null) {
         final icon = await MapMarkerHelper.createVehicleMarker(
           type: v.type,
@@ -473,37 +537,25 @@ class TrackController extends GetxController {
     }));
 
     final Set<Marker> newMarkers = results.whereType<Marker>().toSet();
-    markers.assignAll(newMarkers);
-  }
 
-  void _updateCamera({bool animate = true}) {
-    if (vehicles.isEmpty) return;
-    final v = vehicles[selectedIndex.value];
-    if (v.latitude != null && v.longitude != null) {
-      if (animate) {
-        mapController?.animateCamera(
-          CameraUpdate.newLatLngZoom(LatLng(v.latitude!, v.longitude!), 19),
-        );
-      } else {
-        mapController?.moveCamera(
-          CameraUpdate.newLatLngZoom(LatLng(v.latitude!, v.longitude!), 19),
-        );
-      }
+    // Re-add the user location marker if we have userLocation
+    if (userLocation.value != null) {
+      // Re-create it with current heading or 0
+      final icon = await MapMarkerHelper.createUserLocationMarker(heading: 0);
+      newMarkers.add(Marker(
+        markerId: const MarkerId('user_location'),
+        position: userLocation.value!,
+        icon: icon,
+        anchor: const Offset(0.5, 0.5),
+        zIndex: 99,
+      ));
     }
+    
+    markers.assignAll(newMarkers);
   }
 
   void toggleEngine() {
     isEngineOn.value = !isEngineOn.value;
-  }
-
-  void centerOnVehicle() {
-    if (vehicles.isEmpty) return;
-    final v = vehicles[selectedIndex.value];
-    if (v.latitude != null && v.longitude != null) {
-      mapController?.animateCamera(
-        CameraUpdate.newLatLngZoom(LatLng(v.latitude!, v.longitude!), 19),
-      );
-    }
   }
 
   String getVehicleImage(ActiveVehicleModel vehicle, int listIndex) {

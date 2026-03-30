@@ -176,7 +176,7 @@ class MapMarkerHelper {
     final double cy = labelBoxH + labelGap + triH + outerR;
 
     // ── Colors ───────────────────────────────────────────────────────
-    final Color base      = _baseColor(type);
+    final Color base      = _baseColor(type, isOnline);
     final Color outerRing = base.withOpacity(isOnline ? 0.22 : 0.12);
     final Color innerRing = base.withOpacity(isOnline ? 0.48 : 0.24);
     final Color fill      = isOnline ? base : base.withOpacity(0.65);
@@ -285,14 +285,14 @@ class MapMarkerHelper {
 
   // ── User location marker ────────────────────────────────────────────────────
 
-  /// Google-Maps-style blue dot rendered sharp at device DPI.
+  /// Google-Maps-style blue dot with a directional triangle rendered sharp at device DPI.
   /// Marker anchor: const Offset(0.5, 0.5)
-  static Future<BitmapDescriptor> createUserLocationMarker() async {
-    const String key = 'user_location_dot';
+  static Future<BitmapDescriptor> createUserLocationMarker({double heading = 0.0}) async {
+    final String key = 'user_location_dot_${heading.round()}';
     if (_cache.containsKey(key)) return _cache[key]!;
 
     final double dpr = _dpr;
-    const double logicalSize = 34.0; // (was 44)
+    const double logicalSize = 34.0; // Total canvas
     final double physSize    = logicalSize * dpr;
 
     final ui.PictureRecorder rec = ui.PictureRecorder();
@@ -305,11 +305,25 @@ class MapMarkerHelper {
     const double cy = logicalSize / 2;
     const Color blue = Color(0xFF4285F4);
 
+    // Directional head (triangle)
+    canvas.save();
+    canvas.translate(cx, cy);
+    canvas.rotate((heading - 90) * (3.14159265358979 / 180.0));
+    
+    final Path headPath = Path();
+    headPath.moveTo(11, -4);  // Adjust position relative to the dot
+    headPath.lineTo(16, 0);   // Point of the triangle
+    headPath.lineTo(11, 4);
+    headPath.close();
+    
+    canvas.drawPath(headPath, Paint()..color = blue);
+    canvas.restore();
+
     // Outer glow
-    canvas.drawCircle(Offset(cx, cy), 14, // (was 18)
+    canvas.drawCircle(Offset(cx, cy), 14,
         Paint()..color = blue.withOpacity(0.18));
     // White ring
-    canvas.drawCircle(Offset(cx, cy), 8.5, Paint()..color = Colors.white); // (was 11)
+    canvas.drawCircle(Offset(cx, cy), 8.5, Paint()..color = Colors.white);
     // Shadow on white ring
     canvas.drawCircle(
       Offset(cx, cy), 8.5,
@@ -317,10 +331,10 @@ class MapMarkerHelper {
         ..color = Colors.black.withOpacity(0.15)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.5
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.2), // (was 1.5)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.2),
     );
     // Blue dot
-    canvas.drawCircle(Offset(cx, cy), 6.5, Paint()..color = blue); // (was 8)
+    canvas.drawCircle(Offset(cx, cy), 6.5, Paint()..color = blue);
     // Inner specular
     canvas.drawCircle(Offset(cx, cy), 3,
         Paint()..color = Colors.white.withOpacity(0.28));
@@ -363,7 +377,8 @@ class MapMarkerHelper {
   static double _scale(double zoom) =>
       0.45 + ((zoom.clamp(8.0, 20.0) - 8.0) / 12.0) * 0.65;
 
-  static Color _baseColor(String type) {
+  static Color _baseColor(String type, bool isOnline) {
+    if (!isOnline) return const Color(0xFF9E9E9E); // Grey for offline
     switch (type.toLowerCase()) {
       case 'truck':      return const Color(0xFF2196F3);
       case 'bike':
