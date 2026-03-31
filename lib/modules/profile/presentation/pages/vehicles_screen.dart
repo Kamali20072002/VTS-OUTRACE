@@ -493,10 +493,16 @@ class AddVehicleScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _CustomTextField(
-              label: 'Registration Number',
-              controller: controller.regNoCtrl,
-              icon: Icons.numbers_rounded,
+            Obx(
+              () => _CustomTextField(
+                label: 'Registration Number',
+                controller: controller.regNoCtrl,
+                icon: Icons.numbers_rounded,
+                hintText: 'KA-01-AB-1234',
+                errorText: controller.regNoErrorMessage.value.isEmpty
+                    ? null
+                    : controller.regNoErrorMessage.value,
+              ),
             ),
             const SizedBox(height: 20),
             _CustomTextField(
@@ -1079,6 +1085,8 @@ class _CustomTextField extends StatelessWidget {
   final dynamic icon;
   final TextInputType inputType;
   final Widget? suffixIcon;
+  final String? hintText;
+  final String? errorText;
 
   const _CustomTextField({
     required this.label,
@@ -1086,6 +1094,8 @@ class _CustomTextField extends StatelessWidget {
     required this.icon,
     this.inputType = TextInputType.text,
     this.suffixIcon,
+    this.hintText,
+    this.errorText,
   });
 
   @override
@@ -1103,10 +1113,12 @@ class _CustomTextField extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Container(
-          height: 54,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border, width: 1.5),
+            border: Border.all(
+              color: errorText != null ? AppColors.red : AppColors.border,
+              width: 1.5,
+            ),
             color: AppColors.white,
           ),
           child: TextField(
@@ -1118,6 +1130,11 @@ class _CustomTextField extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
             decoration: InputDecoration(
+              hintText: hintText,
+              hintStyle: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                color: AppColors.textTertiary,
+              ),
               prefixIcon: icon is IconData
                   ? Icon(icon as IconData,
                       color: AppColors.textSecondary, size: 20)
@@ -1133,10 +1150,25 @@ class _CustomTextField extends StatelessWidget {
                     ),
               suffixIcon: suffixIcon,
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 16,
+                horizontal: 16,
+              ),
             ),
           ),
         ),
+        if (errorText != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 4),
+            child: Text(
+              errorText!,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 11,
+                color: AppColors.red,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
       ],
     );
   }

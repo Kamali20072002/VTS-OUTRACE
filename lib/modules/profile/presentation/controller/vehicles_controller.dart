@@ -61,6 +61,7 @@ class VehiclesController extends GetxController {
   final TextEditingController modelCtrl = TextEditingController();
   final RxString selectedType    = 'CAR'.obs;
   final RxString selectedDeviceId = ''.obs;
+  final RxString regNoErrorMessage = ''.obs;
 
   // ── Activate device form ───────────────────────────────────
   final TextEditingController imeiCtrl = TextEditingController();
@@ -70,6 +71,35 @@ class VehiclesController extends GetxController {
     super.onInit();
     loadVehicles();
     loadVehicleTypes();
+
+    regNoCtrl.addListener(() {
+      final val = regNoCtrl.text.trim();
+      if (val.isEmpty) {
+        regNoErrorMessage.value = '';
+      } else {
+        // Only validate in real-time if they have typed enough characters
+        // or if an error was already being shown from a previous submit attempt
+        if (val.length >= 2 || regNoErrorMessage.value.isNotEmpty) {
+          _validateRegNo(val, showError: val.length >= 10);
+        }
+      }
+    });
+  }
+
+  bool _validateRegNo(String value, {bool showError = true}) {
+    if (value.isEmpty) {
+      if (showError) regNoErrorMessage.value = 'Registration number is required';
+      return false;
+    }
+    // Simple regex for Indian Vehicle Registration: XX-00-XX-0000 or XX-00-XXX-0000
+    // Standardizing on XX-00-XX-0000 format or similar
+    final regExp = RegExp(r'^[A-Z]{2}[-][0-9]{2}[-][A-Z]{1,2}[-][0-9]{4}$');
+    if (!regExp.hasMatch(value.toUpperCase())) {
+      if (showError) regNoErrorMessage.value = 'Invalid format. Use XX-00-XX-0000';
+      return false;
+    }
+    regNoErrorMessage.value = '';
+    return true;
   }
 
   @override
@@ -324,7 +354,7 @@ class VehiclesController extends GetxController {
     final type  = selectedType.value;
     final devId = selectedDeviceId.value;
 
-    if (regNo.isEmpty) { _showError(context, 'Please enter registration number'); return; }
+    if (!_validateRegNo(regNo, showError: true)) return;
     if (model.isEmpty) { _showError(context, 'Please enter vehicle model'); return; }
     if (devId.isEmpty) { _showError(context, 'Please select a device'); return; }
 
