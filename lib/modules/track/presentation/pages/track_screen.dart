@@ -42,6 +42,7 @@ class _TrackScreenState extends State<TrackScreen> {
 
           // ── Google Map full screen ───────────────────────────────────
           Obx(() => GoogleMap(
+            padding: EdgeInsets.only(bottom: 220, top: topPad + 60),
             onMapCreated: controller.onMapCreated,
             onCameraIdle: controller.onCameraIdle,
             onTap: (_) {
@@ -666,22 +667,20 @@ class _TopBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-            ),
-          ],
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      elevation: 2,
+      // ignore: deprecated_member_use
+      shadowColor: Colors.black.withOpacity(0.1),
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          width: 40,
+          height: 40,
+          child: Center(child: child),
         ),
-        child: Center(child: child),
       ),
     );
   }
@@ -698,22 +697,23 @@ class _MapBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.07),
-              blurRadius: 6,
-            ),
-          ],
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      clipBehavior: Clip.antiAlias,
+      elevation: 2,
+      // ignore: deprecated_member_use
+      shadowColor: Colors.black.withOpacity(0.2),
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 20, color: AppColors.textPrimary),
         ),
-        child: Icon(icon, size: 16, color: AppColors.textPrimary),
       ),
     );
   }

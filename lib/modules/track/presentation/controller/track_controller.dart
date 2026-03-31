@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
+import 'package:notix_pro/notix_pro.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
@@ -76,32 +77,109 @@ class TrackController extends GetxController {
   }
 
   Future<void> getUserLocation() async {
+    final context = Get.context;
+    if (context == null) return;
+
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return;
+      if (!serviceEnabled) {
+        NotixDialog.show(
+          context,
+          type: NotixType.warning,
+          theme: NotixTheme(
+            animationStyle: NotixAnimationStyle.flip,
+          ),
+          title: 'Location Disabled',
+          message: 'Please enable location services to find your position.',
+          confirmText: 'Settings',
+          cancelText: 'Cancel',
+          onConfirm: () => Geolocator.openLocationSettings(),
+        );
+        return;
+      }
 
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) return;
+        if (permission == LocationPermission.denied) {
+          NotixDialog.show(
+            context,
+            type: NotixType.error,
+            theme: NotixTheme(
+              animationStyle: NotixAnimationStyle.flip,
+            ),
+            title: 'Permission Denied',
+            message: 'Location permission is required to find your position.',
+            confirmText: 'Retry',
+            cancelText: 'Cancel',
+            onConfirm: () => getUserLocation(),
+          );
+          return;
+        }
       }
 
-      if (permission == LocationPermission.deniedForever) return;
+      if (permission == LocationPermission.deniedForever) {
+        NotixDialog.show(
+          context,
+          type: NotixType.error,
+          theme: NotixTheme(
+            animationStyle: NotixAnimationStyle.flip,
+          ),
+          title: 'Permission Blocked',
+          message: 'Location permissions are permanently denied. Please enable them in settings.',
+          confirmText: 'Open Settings',
+          cancelText: 'Cancel',
+          onConfirm: () => Geolocator.openAppSettings(),
+        );
+        return;
+      }
 
-      Position position = await Geolocator.getCurrentPosition();
+      // Try last known first for immediate response
+      Position? lastKnown = await Geolocator.getLastKnownPosition();
+      if (lastKnown != null) {
+        userLocation.value = LatLng(lastKnown.latitude, lastKnown.longitude);
+        await updateUserLocationMarker(userLocation.value!, lastKnown.heading);
+        mapController?.animateCamera(
+          CameraUpdate.newLatLngZoom(userLocation.value!, 18),
+        );
+        _startGeofenceAnimation();
+      }
+
+      // Get current position (might take a few seconds)
+      Position position = await Geolocator.getCurrentPosition(
+        // ignore: deprecated_member_use
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 5),
+      ).catchError((e) async {
+        // If timeout or other error, fallback to last known if we don't have it yet
+        if (userLocation.value == null) {
+          throw e;
+        }
+        return lastKnown!; // Already handled
+      });
+
       userLocation.value = LatLng(position.latitude, position.longitude);
       
       // Update user location marker with heading if available
       await updateUserLocationMarker(userLocation.value!, position.heading);
 
-      // Animate map to user location (zooming in up to the most - level 20)
+      // Animate map to user location (zooming in)
       mapController?.animateCamera(
-        CameraUpdate.newLatLngZoom(userLocation.value!, 20),
+        CameraUpdate.newLatLngZoom(userLocation.value!, 18),
       );
 
       _startGeofenceAnimation();
     } catch (e) {
       debugPrint('Error getting user location: $e');
+      if (userLocation.value == null) {
+        NotixToast.show(
+          context,
+          type: NotixType.error,
+          title: 'Location Error',
+          message: 'Could not retrieve your current location. Please try again.',
+          position: NotixToastPosition.top,
+        );
+      }
     }
   }
 
@@ -345,7 +423,7 @@ class TrackController extends GetxController {
     }
   }
 
-  void fitAllMarkers() {
+  void fitAllMarkers({double padding = 150.0}) {
     if (mapController == null) return;
     
     final list = filteredVehicles;
@@ -364,6 +442,8 @@ class TrackController extends GetxController {
       final v = validVehicles.first;
       final pos = LatLng(v.latitude!, v.longitude!);
       bounds = LatLngBounds(southwest: pos, northeast: pos);
+      mapController?.animateCamera(CameraUpdate.newLatLngZoom(pos, 15));
+      return;
     } else {
       double minLat = validVehicles.first.latitude!;
       double maxLat = validVehicles.first.latitude!;
@@ -382,7 +462,7 @@ class TrackController extends GetxController {
       );
     }
     
-    mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 80));
+    mapController?.animateCamera(CameraUpdate.newLatLngBounds(bounds, padding));
   }
 
   void selectVehicle(int index, {bool animate = true, bool scrollPage = true}) {
@@ -390,8 +470,6 @@ class TrackController extends GetxController {
     if (index < 0 || index >= list.length) return;
     
     final v = list[index];
-    // We need to keep track of which one is selected relative to the current view
-    // If we are in PageView, the 'index' passed is the index in filteredVehicles
     
     // Update local reactive stats
     speed.value = v.speed?.toStringAsFixed(0) ?? '0';
@@ -400,12 +478,12 @@ class TrackController extends GetxController {
     isEngineOn.value = v.isOnline;
     selectedIndex.value = vehicles.indexWhere((element) => element.deviceId == v.deviceId);
 
-    // No auto zoom in on selected vehicle as per user request
-    // _updateCameraFromVehicle(v, animate: animate);
+    // Keep all markers in view but with the selected one centered
+    // This provides the "see both" behavior requested
+    fitAllMarkers(padding: 150.0);
     
     // We update markers but need to know which deviceId is selected
     _updateMarkers();
-    fitAllMarkers(); // Maintain responsive zoom
     
     // Scroll page if triggered from marker tap
     if (scrollPage && pageController.hasClients) {
@@ -446,11 +524,13 @@ class TrackController extends GetxController {
     if (selectedIndex.value != -1 && vehicles[selectedIndex.value].deviceId == v.deviceId) {
       speed.value = v.speed?.toStringAsFixed(0) ?? '0';
       isEngineOn.value = v.isOnline;
-      // No need to zoom in on a single live moving vehicle as per user request
     }
 
     _updateMarkers();
-    fitAllMarkers(); // Keep map responsive to all plotted devices
+    
+    // Automatically adjust view to include all vehicles including the newly updated one
+    // Use a slightly larger padding for live updates to avoid constant micro-zooming
+    fitAllMarkers(padding: 180.0);
   }
 
   Future<void> fetchLatestGps(String deviceId, {bool updateUI = true}) async {
