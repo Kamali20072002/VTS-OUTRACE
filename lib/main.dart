@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:outrace/widgets/loading_screen.dart';
 import 'theme/app_theme.dart';
 import 'modules/splash/presentation/pages/splash_screen.dart';
-import 'modules/home/presentation/pages/home_screen.dart';
 import 'core/utils/token_storage.dart';
 
 void main() async {
@@ -43,8 +43,8 @@ class OutraceApp extends StatelessWidget {
       title: 'Outrace',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
-      // If session exists, bypass Splash/Onboarding and go directly to Home
-      home: isLoggedIn ? const HomeScreen() : const SplashScreen(),
+      // If session exists, bypass Splash/Onboarding and go directly to Loading
+      home: isLoggedIn ? const LoadingScreen() : const SplashScreen(),
     );
   }
 }
