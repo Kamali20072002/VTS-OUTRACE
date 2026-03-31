@@ -53,6 +53,25 @@ class LoginController extends GetxController {
     regEmailCtrl.addListener(_validateRegister);
     phoneCtrl.addListener(_validateRegister);
     passwordCtrl.addListener(_validateRegister);
+
+    // Clear data when switching tabs to prevent "leaking" between login/register
+    ever(activeTab, (_) => _clearAllFields());
+  }
+
+  void _clearAllFields() {
+    emailCtrl.clear();
+    passCtrl.clear();
+    nameCtrl.clear();
+    regEmailCtrl.clear();
+    phoneCtrl.clear();
+    passwordCtrl.clear();
+    
+    loginEmailError.value = '';
+    loginPassError.value = '';
+    regNameError.value = '';
+    regEmailError.value = '';
+    regPhoneError.value = '';
+    regPassError.value = '';
   }
 
   void _validateLogin() {
@@ -112,13 +131,6 @@ class LoginController extends GetxController {
     phoneCtrl.removeListener(_validateRegister);
     passwordCtrl.removeListener(_validateRegister);
     
-    emailCtrl.dispose();
-    passCtrl.dispose();
-    nameCtrl.dispose();
-    regEmailCtrl.dispose();
-    phoneCtrl.dispose();
-    passwordCtrl.dispose();
-    focusNode.dispose();
     super.onClose();
   }
 

@@ -127,16 +127,22 @@ class ProfileController extends GetxController {
     newPassCtrl.removeListener(_validatePassword);
     confPassCtrl.removeListener(_validatePassword);
     
-    nameEditCtrl.dispose();
-    phoneEditCtrl.dispose();
-    oldPassCtrl.dispose();
-    newPassCtrl.dispose();
-    confPassCtrl.dispose();
-    
-    regNoCtrl.dispose();
-    vModelCtrl.dispose();
-    imeiCtrl.dispose();
     super.onClose();
+  }
+
+  void resetProfileEdit() {
+    nameEditCtrl.text = name.value;
+    phoneEditCtrl.text = phone.value;
+    profileError.value = '';
+    isProfileChanged.value = false;
+  }
+
+  void resetPasswordEdit() {
+    oldPassCtrl.clear();
+    newPassCtrl.clear();
+    confPassCtrl.clear();
+    passwordError.value = '';
+    isPasswordChanged.value = false;
   }
 
   // ── Load profile ───────────────────────────
@@ -394,10 +400,6 @@ class ProfileController extends GetxController {
       onCancel: () {},
       onConfirm: () async {
         await TokenStorage.clearAll();
-        
-        // Delete controllers before navigating to ensure they are re-initialized with defaults
-        Get.delete<HomeController>();
-        Get.delete<ProfileController>();
         
         Get.offAll(
           () => const LoginScreen(),

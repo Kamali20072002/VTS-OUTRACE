@@ -36,12 +36,6 @@ class OtpController extends GetxController {
 
   @override
   void onClose() {
-    for (final c in ctrls) {
-      c.dispose();
-    }
-    for (final n in nodes) {
-      n.dispose();
-    }
     _timer?.cancel();
     super.onClose();
   }

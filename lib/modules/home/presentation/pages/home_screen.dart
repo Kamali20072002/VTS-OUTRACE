@@ -23,11 +23,11 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(HomeController());
+    final controller = Get.find<HomeController>();
     // Ensure ProfileController is available for the name
-    Get.put(ProfileController());
+    Get.find<ProfileController>();
     // Initialize VehiclesController for search navigation
-    Get.put(VehiclesController());
+    Get.find<VehiclesController>();
 
     return Obx(() => Scaffold(
       backgroundColor: AppColors.white,

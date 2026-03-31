@@ -622,8 +622,6 @@ class TrackController extends GetxController {
   void onClose() {
     SocketService.disconnect();
     _bloomTimer?.cancel();
-    mapController?.dispose();
-    pageController.dispose();
     super.onClose();
   }
 }

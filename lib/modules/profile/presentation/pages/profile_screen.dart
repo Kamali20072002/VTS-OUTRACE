@@ -14,7 +14,7 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(ProfileController());
+    final controller = Get.find<ProfileController>();
     final homeController = Get.find<HomeController>();
     final topPad = MediaQuery.of(context).padding.top;
 
@@ -184,7 +184,7 @@ class ProfileScreen extends StatelessWidget {
                   // ── Fleet section ────────────────────
                   _SectionLabel(label: 'Fleet'),
                   _MenuItem(
-                    icon: Icons.directions_car_rounded, // fallback icon
+                    icon: Icons.directions_car_rounded,
                     customIconAsset: 'assets/icons/car.png',
                     iconBg: AppColors.purpleSoft,
                     iconColor: AppColors.purple,
@@ -234,7 +234,10 @@ class ProfileScreen extends StatelessWidget {
                       iconColor: AppColors.purple,
                       label: 'Edit Profile',
                       isLoading: controller.isLoading.value,
-                      onTap: () => _showEditProfileSheet(context, controller),
+                      onTap: () {
+                        controller.resetProfileEdit();
+                        _showEditProfileSheet(context, controller);
+                      },
                     ),
                   ),
                   Obx(
@@ -244,7 +247,10 @@ class ProfileScreen extends StatelessWidget {
                       iconColor: AppColors.purple,
                       label: 'Privacy & Security',
                       isLoading: controller.isLoading.value,
-                      onTap: () => _showPrivacySheet(context, controller),
+                      onTap: () {
+                        controller.resetPasswordEdit();
+                        _showPrivacySheet(context, controller);
+                      },
                     ),
                   ),
                   Obx(
@@ -410,6 +416,8 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // ── Edit Profile Bottom Sheet ─────────────
+  // FIX: Use builder's ctx for MediaQuery so viewInsets updates reactively
+  // when the keyboard opens. AnimatedPadding smoothly slides the sheet up.
   void _showEditProfileSheet(
     BuildContext context,
     ProfileController controller,
@@ -418,9 +426,11 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => Padding(
+      builder: (ctx) => AnimatedPadding(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
         ),
         child: _BottomSheet(
           title: 'Edit Profile',
@@ -430,39 +440,45 @@ class ProfileScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Obx(() => _SheetInputField(
-                  label: 'Full Name',
-                  controller: controller.nameEditCtrl,
-                  icon: Icons.person_outline_rounded,
-                  errorText: controller.profileError.value.contains('Name') 
-                      ? controller.profileError.value 
-                      : null,
-                )),
+                      label: 'Full Name',
+                      controller: controller.nameEditCtrl,
+                      icon: Icons.person_outline_rounded,
+                      maxLength: 20,
+                      errorText: controller.profileError.value.contains('Name')
+                          ? controller.profileError.value
+                          : null,
+                    )),
                 const SizedBox(height: 14),
                 Obx(() => _SheetInputField(
-                  label: 'Phone Number',
-                  controller: controller.phoneEditCtrl,
-                  icon: Icons.phone_outlined,
-                  inputType: TextInputType.phone,
-                  maxLength: 10,
-                  errorText: controller.profileError.value.contains('Phone') 
-                      ? controller.profileError.value 
-                      : null,
-                )),
+                      label: 'Phone Number',
+                      controller: controller.phoneEditCtrl,
+                      icon: Icons.phone_outlined,
+                      inputType: TextInputType.phone,
+                      maxLength: 10,
+                      errorText:
+                          controller.profileError.value.contains('Phone')
+                              ? controller.profileError.value
+                              : null,
+                    )),
                 const SizedBox(height: 24),
                 Obx(
                   () {
-                    final isEnabled = controller.isProfileChanged.value && 
-                                    controller.profileError.value.isEmpty && 
-                                    !controller.isUpdating.value;
-                    
+                    final isEnabled = controller.isProfileChanged.value &&
+                        controller.profileError.value.isEmpty &&
+                        !controller.isUpdating.value;
+
                     return GestureDetector(
-                      onTap: isEnabled ? () => controller.updateProfile(context) : null,
+                      onTap: isEnabled
+                          ? () => controller.updateProfile(context)
+                          : null,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         width: double.infinity,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: isEnabled ? AppColors.purple : AppColors.border,
+                          color: isEnabled
+                              ? AppColors.purple
+                              : AppColors.border,
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Center(
@@ -480,7 +496,9 @@ class ProfileScreen extends StatelessWidget {
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
-                                    color: isEnabled ? Colors.white : AppColors.textTertiary,
+                                    color: isEnabled
+                                        ? Colors.white
+                                        : AppColors.textTertiary,
                                   ),
                                 ),
                         ),
@@ -497,14 +515,17 @@ class ProfileScreen extends StatelessWidget {
   }
 
   // ── Privacy & Security Bottom Sheet ──────
+  // FIX: Same keyboard overlay fix applied here for password fields.
   void _showPrivacySheet(BuildContext context, ProfileController controller) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => Padding(
+      builder: (ctx) => AnimatedPadding(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
         ),
         child: _BottomSheet(
           title: 'Privacy & Security',
@@ -523,15 +544,16 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 14),
-  
+
                 Obx(
                   () => _PasswordField(
                     label: 'Current Password',
                     controller: controller.oldPassCtrl,
                     showPass: controller.showOldPass.value,
                     onToggle: () => controller.showOldPass.toggle(),
-                    errorText: controller.passwordError.value.contains('Current') 
-                        ? controller.passwordError.value 
+                    errorText: controller.passwordError.value
+                            .contains('Current')
+                        ? controller.passwordError.value
                         : null,
                   ),
                 ),
@@ -542,9 +564,10 @@ class ProfileScreen extends StatelessWidget {
                     controller: controller.newPassCtrl,
                     showPass: controller.showNewPass.value,
                     onToggle: () => controller.showNewPass.toggle(),
-                    errorText: controller.passwordError.value.contains('New') 
-                        ? controller.passwordError.value 
-                        : null,
+                    errorText:
+                        controller.passwordError.value.contains('New')
+                            ? controller.passwordError.value
+                            : null,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -554,21 +577,24 @@ class ProfileScreen extends StatelessWidget {
                     controller: controller.confPassCtrl,
                     showPass: controller.showConfPass.value,
                     onToggle: () => controller.showConfPass.toggle(),
-                    errorText: controller.passwordError.value.contains('match') 
-                        ? controller.passwordError.value 
-                        : null,
+                    errorText:
+                        controller.passwordError.value.contains('match')
+                            ? controller.passwordError.value
+                            : null,
                   ),
                 ),
                 const SizedBox(height: 24),
-  
+
                 Obx(
                   () {
-                    final isEnabled = controller.isPasswordChanged.value && 
-                                    controller.passwordError.value.isEmpty && 
-                                    !controller.isChangingPass.value;
-                    
+                    final isEnabled = controller.isPasswordChanged.value &&
+                        controller.passwordError.value.isEmpty &&
+                        !controller.isChangingPass.value;
+
                     return GestureDetector(
-                      onTap: isEnabled ? () => controller.changePassword(context) : null,
+                      onTap: isEnabled
+                          ? () => controller.changePassword(context)
+                          : null,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         width: double.infinity,
@@ -592,7 +618,9 @@ class ProfileScreen extends StatelessWidget {
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
-                                    color: isEnabled ? Colors.white : AppColors.textTertiary,
+                                    color: isEnabled
+                                        ? Colors.white
+                                        : AppColors.textTertiary,
                                   ),
                                 ),
                         ),
@@ -600,11 +628,11 @@ class ProfileScreen extends StatelessWidget {
                     );
                   },
                 ),
-  
+
                 const SizedBox(height: 24),
                 const Divider(color: AppColors.border),
                 const SizedBox(height: 16),
-  
+
                 // Privacy info section
                 Text(
                   'Privacy Information',
@@ -628,7 +656,8 @@ class ProfileScreen extends StatelessWidget {
                 _PrivacyInfoRow(
                   icon: Icons.delete_outline_rounded,
                   title: 'Data Deletion',
-                  subtitle: 'You can request data deletion by contacting support',
+                  subtitle:
+                      'You can request data deletion by contacting support',
                 ),
               ],
             ),
@@ -808,7 +837,9 @@ class _SheetInputField extends StatelessWidget {
             controller: controller,
             keyboardType: inputType,
             maxLength: maxLength,
-            inputFormatters: maxLength != null
+            inputFormatters: (maxLength != null &&
+                    (inputType == TextInputType.phone ||
+                        inputType == TextInputType.number))
                 ? [FilteringTextInputFormatter.digitsOnly]
                 : null,
             style: GoogleFonts.plusJakartaSans(
@@ -893,7 +924,9 @@ class _PasswordField extends StatelessWidget {
               suffixIcon: GestureDetector(
                 onTap: onToggle,
                 child: Icon(
-                  showPass ? Icons.visibility_rounded : Icons.visibility_off_rounded,
+                  showPass
+                      ? Icons.visibility_rounded
+                      : Icons.visibility_off_rounded,
                   color: AppColors.textTertiary,
                   size: 18,
                 ),
@@ -921,6 +954,7 @@ class _PasswordField extends StatelessWidget {
     );
   }
 }
+
 // ── Privacy info row ──────────────────────────────────────
 class _PrivacyInfoRow extends StatelessWidget {
   final IconData icon;
@@ -1237,8 +1271,8 @@ class _MenuItem extends StatelessWidget {
                           color: isDestructive
                               ? AppColors.red
                               : isComingSoon
-                              ? AppColors.textTertiary
-                              : AppColors.textPrimary,
+                                  ? AppColors.textTertiary
+                                  : AppColors.textPrimary,
                         ),
                       ),
                       if (isComingSoon) ...[
@@ -1271,7 +1305,8 @@ class _MenuItem extends StatelessWidget {
             // Static trailing
             if (trailing != null && !isComingSoon) ...[
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.purpleSoft,
                   borderRadius: BorderRadius.circular(10),
@@ -1318,7 +1353,8 @@ class _MenuItem extends StatelessWidget {
             Icon(
               Icons.arrow_forward_ios_rounded,
               size: 13,
-              color: isDestructive ? AppColors.red : AppColors.textTertiary,
+              color:
+                  isDestructive ? AppColors.red : AppColors.textTertiary,
             ),
           ],
         ),

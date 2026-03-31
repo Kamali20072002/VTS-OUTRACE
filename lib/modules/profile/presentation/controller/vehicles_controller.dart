@@ -74,9 +74,6 @@ class VehiclesController extends GetxController {
 
   @override
   void onClose() {
-    regNoCtrl.dispose();
-    modelCtrl.dispose();
-    imeiCtrl.dispose();
     super.onClose();
   }
 

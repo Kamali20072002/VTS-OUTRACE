@@ -523,6 +523,7 @@ class _RegisterForm extends StatelessWidget {
           controller: controller.nameCtrl,
           icon: Icons.person_outline_rounded,
           inputType: TextInputType.name,
+          maxLength: 20,
           errorText: controller.regNameError.value,
         )),
         const SizedBox(height: 14),
@@ -716,7 +717,9 @@ class _InputField extends StatelessWidget {
             controller: controller,
             keyboardType: inputType,
             maxLength: maxLength,
-            inputFormatters: maxLength != null
+            inputFormatters: (maxLength != null &&
+                    (inputType == TextInputType.phone ||
+                        inputType == TextInputType.number))
                 ? [FilteringTextInputFormatter.digitsOnly]
                 : null,
             style: GoogleFonts.plusJakartaSans(

@@ -316,10 +316,6 @@ class HomeController extends GetxController {
 
   @override
   void onClose() {
-    homeMapController?.dispose();
-    homeScrollController.dispose();
-    tripsScrollController.dispose();
-    profileScrollController.dispose();
     super.onClose();
   }
 }

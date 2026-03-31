@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../modules/home/presentation/pages/home_screen.dart';
 import '../modules/home/presentation/controller/home_controller.dart';
 import '../modules/profile/presentation/controller/profile_controller.dart';
+import '../modules/profile/presentation/controller/vehicles_controller.dart';
 import '../modules/trips/presentation/controller/trips_controller.dart';
 
 class LoadingScreen extends StatefulWidget {
@@ -81,9 +82,13 @@ class _LoadingScreenState extends State<LoadingScreen>
 
   Future<void> _startLoadingProcess() async {
     // 0. Initialize controllers immediately so they are available for build()
-    Get.put(HomeController());
+    final homeCtrl = Get.put(HomeController());
     Get.put(TripsController());
     Get.put(ProfileController());
+    Get.put(VehiclesController());
+
+    // Reset current index to 0 so we always land on Home tab after login
+    homeCtrl.currentIndex.value = 0;
 
     try {
       // 1. Check Internet
@@ -103,7 +108,6 @@ class _LoadingScreenState extends State<LoadingScreen>
 
       // 2. Load Vehicle Data
       if (mounted) setState(() => _msgIndex = 1);
-      final homeCtrl = Get.find<HomeController>();
       await homeCtrl.loadActiveVehicles();
       await _progressCtrl.animateTo(0.5);
 
@@ -292,217 +296,219 @@ class _LoadingScreenState extends State<LoadingScreen>
             Expanded(
               child: Container(
                 color: AppColors.white,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    // ── Car animation strip ─────────────
-                    Container(
-                      width: double.infinity,
-                      height: 80,
-                      color: AppColors.bg,
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            bottom: 18,
-                            left: 0,
-                            right: 0,
-                            child: Container(
-                              height: 1,
-                              color: AppColors.border,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Car animation strip ─────────────
+                      Container(
+                        width: double.infinity,
+                        height: 80,
+                        color: AppColors.bg,
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              bottom: 18,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                height: 1,
+                                color: AppColors.border,
+                              ),
                             ),
-                          ),
-                          Positioned(
-                            bottom: 17,
-                            left: 0,
-                            right: 0,
-                            child: AnimatedBuilder(
-                              animation: _carCtrl,
-                              builder: (_, _) => CustomPaint(
-                                painter: _DashPainter(
-                                  progress: _carAnim.value,
+                            Positioned(
+                              bottom: 17,
+                              left: 0,
+                              right: 0,
+                              child: AnimatedBuilder(
+                                animation: _carCtrl,
+                                builder: (_, _) => CustomPaint(
+                                  painter: _DashPainter(
+                                    progress: _carAnim.value,
+                                  ),
+                                  child: const SizedBox(height: 3),
                                 ),
-                                child: const SizedBox(height: 3),
                               ),
                             ),
-                          ),
-                          AnimatedBuilder(
-                            animation: _carAnim,
-                            builder: (_, _) {
-                              final x = _carAnim.value * size.width;
-                              return Positioned(
-                                left: x - 24,
-                                bottom: 12,
-                                child: Image.asset(
-                                  'assets/icons/loading_car.png',
-                                  width: 48,
-                                  height: 48,
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // ── Status cards row ────────────────
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _StatusCard(
-                              icon: Icons.location_on_rounded,
-                              label: 'GPS Signal',
-                              value: _isOnline ? 'Strong' : 'None',
-                              valueColor: _isOnline ? AppColors.green : AppColors.red,
-                              iconColor: _isOnline ? AppColors.green : AppColors.red,
-                              iconBg: _isOnline ? AppColors.greenSoft : AppColors.red.withOpacity(0.1),
+                            AnimatedBuilder(
+                              animation: _carAnim,
+                              builder: (_, _) {
+                                final x = _carAnim.value * size.width;
+                                return Positioned(
+                                  left: x - 24,
+                                  bottom: 12,
+                                  child: Image.asset(
+                                    'assets/icons/loading_car.png',
+                                    width: 48,
+                                    height: 48,
+                                  ),
+                                );
+                              },
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Obx(() {
-                              final homeCtrl = Get.find<HomeController>();
-                              final count = homeCtrl.vehicles.length;
-                              return _StatusCardWithImage(
-                                imagePath: 'assets/icons/loading_car.png',
-                                label: 'Vehicles',
-                                value: '$count Found',
-                                valueColor: AppColors.purple,
-                                iconBg: AppColors.purpleSoft,
-                              );
-                            }),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _StatusCard(
-                              icon: Icons.cloud_done_rounded,
-                              label: 'Server',
-                              value: _isOnline ? 'Connected' : 'Offline',
-                              valueColor: _isOnline ? AppColors.green : AppColors.red,
-                              iconColor: _isOnline ? AppColors.green : AppColors.red,
-                              iconBg: _isOnline ? AppColors.greenSoft : AppColors.red.withOpacity(0.1),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // ── Status cards row ────────────────
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _StatusCard(
+                                icon: Icons.location_on_rounded,
+                                label: 'GPS Signal',
+                                value: _isOnline ? 'Strong' : 'None',
+                                valueColor: _isOnline ? AppColors.green : AppColors.red,
+                                iconColor: _isOnline ? AppColors.green : AppColors.red,
+                                iconBg: _isOnline ? AppColors.greenSoft : AppColors.red.withOpacity(0.1),
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Obx(() {
+                                final homeCtrl = Get.find<HomeController>();
+                                final count = homeCtrl.vehicles.length;
+                                return _StatusCardWithImage(
+                                  imagePath: 'assets/icons/loading_car.png',
+                                  label: 'Vehicles',
+                                  value: '$count Found',
+                                  valueColor: AppColors.purple,
+                                  iconBg: AppColors.purpleSoft,
+                                );
+                              }),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _StatusCard(
+                                icon: Icons.cloud_done_rounded,
+                                label: 'Server',
+                                value: _isOnline ? 'Connected' : 'Offline',
+                                valueColor: _isOnline ? AppColors.green : AppColors.red,
+                                iconColor: _isOnline ? AppColors.green : AppColors.red,
+                                iconBg: _isOnline ? AppColors.greenSoft : AppColors.red.withOpacity(0.1),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 14),
+                      const SizedBox(height: 14),
 
-                    // ── Step list ───────────────────────
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: AnimatedBuilder(
-                        animation: _progressAnim,
-                        builder: (_, _) {
-                          final p = _progressAnim.value;
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _StepRow(
-                                label: 'GPS network connected',
-                                done: p > 0.25,
-                                active: p <= 0.25,
-                              ),
-                              _StepRow(
-                                label: 'Vehicle data loaded',
-                                done: p > 0.45,
-                                active: p > 0.25 && p <= 0.45,
-                              ),
-                              _StepRow(
-                                label: 'Fleet locations synced',
-                                done: p > 0.7,
-                                active: p > 0.45 && p <= 0.7,
-                              ),
-                              _StepRow(
-                                label: 'Dashboard ready',
-                                done: p > 0.95,
-                                active: p > 0.7 && p <= 0.95,
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-
-                    const Spacer(),
-
-                    // ── Progress bar + message ──────────
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        20,
-                        0,
-                        20,
-                        bottomPad + 20,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 400),
-                            transitionBuilder: (child, anim) =>
-                                FadeTransition(opacity: anim, child: child),
-                            child: Row(
-                              key: ValueKey(_msgIndex),
+                      // ── Step list ───────────────────────
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: AnimatedBuilder(
+                          animation: _progressAnim,
+                          builder: (_, _) {
+                            final p = _progressAnim.value;
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  width: 4,
-                                  height: 4,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.purple,
-                                    shape: BoxShape.circle,
-                                  ),
+                                _StepRow(
+                                  label: 'GPS network connected',
+                                  done: p > 0.25,
+                                  active: p <= 0.25,
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _messages[_msgIndex],
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 12,
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                _StepRow(
+                                  label: 'Vehicle data loaded',
+                                  done: p > 0.45,
+                                  active: p > 0.25 && p <= 0.45,
+                                ),
+                                _StepRow(
+                                  label: 'Fleet locations synced',
+                                  done: p > 0.7,
+                                  active: p > 0.45 && p <= 0.7,
+                                ),
+                                _StepRow(
+                                  label: 'Dashboard ready',
+                                  done: p > 0.95,
+                                  active: p > 0.7 && p <= 0.95,
                                 ),
                               ],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          AnimatedBuilder(
-                            animation: _progressAnim,
-                            builder: (_, _) => Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: LinearProgressIndicator(
-                                    value: _progressAnim.value,
-                                    backgroundColor: AppColors.bg,
-                                    valueColor:
-                                        const AlwaysStoppedAnimation<Color>(
-                                      AppColors.purple,
+                            );
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // ── Progress bar + message ──────────
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          20,
+                          0,
+                          20,
+                          bottomPad + 20,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 400),
+                              transitionBuilder: (child, anim) =>
+                                  FadeTransition(opacity: anim, child: child),
+                              child: Row(
+                                key: ValueKey(_msgIndex),
+                                children: [
+                                  Container(
+                                    width: 4,
+                                    height: 4,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.purple,
+                                      shape: BoxShape.circle,
                                     ),
-                                    minHeight: 4,
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${(_progressAnim.value * 100).toInt()}%',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11,
-                                    color: AppColors.textTertiary,
-                                    fontWeight: FontWeight.w600,
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _messages[_msgIndex],
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 8),
+                            AnimatedBuilder(
+                              animation: _progressAnim,
+                              builder: (_, _) => Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: LinearProgressIndicator(
+                                      value: _progressAnim.value,
+                                      backgroundColor: AppColors.bg,
+                                      valueColor:
+                                          const AlwaysStoppedAnimation<Color>(
+                                        AppColors.purple,
+                                      ),
+                                      minHeight: 4,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${(_progressAnim.value * 100).toInt()}%',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      color: AppColors.textTertiary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
