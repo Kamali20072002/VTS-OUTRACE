@@ -156,7 +156,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                   ],
                 ),
                 child: RefreshIndicator(
-                  onRefresh: controller.loadVehicles,
+                  onRefresh: () => controller.loadVehicles(forceRefresh: true),
                   color: AppColors.purple,
                   child: CustomScrollView(
                     controller: scrollController,
@@ -245,11 +245,13 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
-                                    Icons.directions_car_filled_rounded,
-                                    size: 70,
-                                    color: AppColors.textTertiary
-                                        .withOpacity(0.5),
+                                  Opacity(
+                                    opacity: 0.15,
+                                    child: Image.asset(
+                                      'assets/icons/car.png',
+                                      width: 140,
+                                      fit: BoxFit.contain,
+                                    ),
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
@@ -260,6 +262,7 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
                                       color: AppColors.dark,
                                     ),
                                   ),
+                                  const SizedBox(height: 80),
                                 ],
                               ),
                             ),
@@ -414,24 +417,29 @@ class _SearchVehicleScreenState extends State<SearchVehicleScreen> {
       ),
       body: Obx(() {
         if (controller.filteredVehicles.isEmpty) {
+          final noVehicles = controller.vehicles.isEmpty;
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.search_off_rounded,
-                  size: 70,
-                  color: AppColors.textTertiary.withOpacity(0.5),
+                Opacity(
+                  opacity: 0.15,
+                  child: Image.asset(
+                    'assets/icons/car.png',
+                    width: 140,
+                    fit: BoxFit.contain,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'No matching vehicles',
+                  noVehicles ? 'No Vehicles Found' : 'No matching vehicles',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColors.dark,
                   ),
                 ),
+                const SizedBox(height: 100),
               ],
             ),
           );
@@ -499,6 +507,10 @@ class AddVehicleScreen extends StatelessWidget {
                 controller: controller.regNoCtrl,
                 icon: Icons.numbers_rounded,
                 hintText: 'KA-01-AB-1234',
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(13),
+                  _RegistrationNumberFormatter(),
+                ],
                 errorText: controller.regNoErrorMessage.value.isEmpty
                     ? null
                     : controller.regNoErrorMessage.value,
@@ -671,7 +683,9 @@ class AddVehicleScreen extends StatelessWidget {
           () => GestureDetector(
             onTap: controller.isAddingVehicle.value
                 ? null
-                : () => controller.addVehicle(context),
+                : () => controller.addVehicle(context).then((success) {
+                      if (success) Get.back();
+                    }),
             child: Container(
               width: double.infinity,
               height: 56,
@@ -1087,6 +1101,7 @@ class _CustomTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final String? hintText;
   final String? errorText;
+  final List<TextInputFormatter>? inputFormatters;
 
   const _CustomTextField({
     required this.label,
@@ -1096,6 +1111,7 @@ class _CustomTextField extends StatelessWidget {
     this.suffixIcon,
     this.hintText,
     this.errorText,
+    this.inputFormatters,
   });
 
   @override
@@ -1124,6 +1140,7 @@ class _CustomTextField extends StatelessWidget {
           child: TextField(
             controller: controller,
             keyboardType: inputType,
+            inputFormatters: inputFormatters,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 15,
               fontWeight: FontWeight.w600,
@@ -1197,6 +1214,34 @@ class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
   @override
   bool shouldRebuild(_StickyHeaderDelegate oldDelegate) {
     return false;
+  }
+}
+
+class _RegistrationNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    var text = newValue.text.toUpperCase().replaceAll('-', '');
+    
+    // Only allow letters and numbers
+    text = text.replaceAll(RegExp(r'[^A-Z0-9]'), '');
+
+    var newString = '';
+    for (var i = 0; i < text.length; i++) {
+      newString += text[i];
+      if (i == 1 || i == 3 || i == 5) {
+        if (i != text.length - 1) {
+          newString += '-';
+        }
+      }
+    }
+
+    return TextEditingValue(
+      text: newString,
+      selection: TextSelection.fromPosition(TextPosition(offset: newString.length)),
+    );
   }
 }
 

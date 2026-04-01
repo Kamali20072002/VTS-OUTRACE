@@ -94,6 +94,7 @@ class NetworkUtils {
   }
 
   static void _handleUnauthorized() async {
+    await CacheService.clearAll();
     await TokenStorage.clearAll();
     Get.offAll(
       () => const LoginScreen(),

@@ -166,20 +166,23 @@ class TripsScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _CircleIconBtn(
-                                  icon: Icons.file_download_outlined,
-                                  onTap: () => controller.downloadReport(),
-                                ),
-                                const SizedBox(width: 8),
-                                _CircleIconBtn(
-                                  icon: Icons.share_outlined,
-                                  onTap: () => controller.shareReport(),
-                                ),
-                              ],
-                            ),
+                            Obx(() {
+                              if (controller.allTrips.isEmpty) return const SizedBox.shrink();
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _CircleIconBtn(
+                                    icon: Icons.file_download_outlined,
+                                    onTap: () => controller.downloadReport(),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _CircleIconBtn(
+                                    icon: Icons.share_outlined,
+                                    onTap: () => controller.shareReport(),
+                                  ),
+                                ],
+                              );
+                            }),
                           ],
                         ),
 
@@ -232,16 +235,17 @@ class TripsScreen extends StatelessWidget {
                   const SizedBox(height: 10),
 
                   // ── SORT & FILTER ROW ──────────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            // SORT
-                            Expanded(
-                              child: Obx(
-                                () => GestureDetector(
+                  Obx(() {
+                    if (controller.allTrips.isEmpty) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              // SORT
+                              Expanded(
+                                child: GestureDetector(
                                   onTap: () =>
                                       _showSortMenu(context, controller),
                                   child: Container(
@@ -286,12 +290,10 @@ class TripsScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            // FILTER
-                            Expanded(
-                              child: Obx(
-                                () => GestureDetector(
+                              const SizedBox(width: 10),
+                              // FILTER
+                              Expanded(
+                                child: GestureDetector(
                                   onTap: () =>
                                       _showFilterSheet(context, controller),
                                   child: Container(
@@ -345,47 +347,42 @@ class TripsScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
 
-                        // Clear filter option
-                        Obx(() {
-                          final hasFilter =
-                              controller.selectedVehicleType.value != 'All' ||
+                          // Clear filter option
+                          if (controller.selectedVehicleType.value != 'All' ||
                               controller.selectedVehicleReg.value !=
-                                  'All Vehicles';
-                          if (!hasFilter) return const SizedBox.shrink();
-
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: InkWell(
-                              onTap: () => controller.clearFilters(),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  const Icon(
-                                    Icons.close_rounded,
-                                    size: 14,
-                                    color: AppColors.red,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Clear Filters',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
+                                  'All Vehicles')
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: InkWell(
+                                onTap: () => controller.clearFilters(),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    const Icon(
+                                      Icons.close_rounded,
+                                      size: 14,
                                       color: AppColors.red,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Clear Filters',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          );
-                        }),
-                      ],
-                    ),
-                  ),
+                        ],
+                      ),
+                    );
+                  }),
 
                   const SizedBox(height: 10),
 
@@ -402,14 +399,59 @@ class TripsScreen extends StatelessWidget {
                       );
                     }
                     if (controller.filteredTrips.isEmpty) {
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 30),
-                        child: Center(
-                          child: Text(
-                            'No trip history found',
-                            style: GoogleFonts.plusJakartaSans(
-                              color: AppColors.textTertiary,
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 20,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 40,
+                          horizontal: 20,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(color: AppColors.border),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.02),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Image.asset(
+                                'assets/gif/redcar.gif',
+                                width: 220,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(
+                                  Icons.history_rounded,
+                                  size: 64,
+                                  color: AppColors.textTertiary,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Text(
+                                'No History found',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Your tracked trips will appear here',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13,
+                                  color: AppColors.textTertiary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );

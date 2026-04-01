@@ -371,10 +371,10 @@ class TrackController extends GetxController {
     }
   }
 
-  Future<void> loadVehicles() async {
+  Future<void> loadVehicles({bool forceRefresh = false}) async {
     isLoading.value = true;
     try {
-      final list = await _repo.getActiveVehicles();
+      final list = await _repo.getActiveVehicles(forceRefresh: forceRefresh);
       
       // Ensure uniqueness by deviceId
       final uniqueVehicles = <String, ActiveVehicleModel>{};

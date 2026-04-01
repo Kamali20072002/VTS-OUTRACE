@@ -34,6 +34,28 @@ class ProfileScreen extends StatelessWidget {
               padding: EdgeInsets.fromLTRB(20, topPad + 20, 20, 28),
               child: Stack(
                 children: [
+                  Obx(() {
+                    if (homeController.vehicles.isNotEmpty) return const SizedBox.shrink();
+                    return Positioned(
+                      left: 0,
+                      top: 0,
+                      child: GestureDetector(
+                        onTap: () => homeController.changeTab(0),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
                   Positioned(
                     top: -30,
                     right: -30,
@@ -181,7 +203,15 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Fleet section ────────────────────
+                 
+
+                  // ── Activity section ─────────────────
+                  Obx(() {
+                    if (homeController.vehicles.isEmpty) return const SizedBox.shrink();
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                         // ── Fleet section ────────────────────
                   _SectionLabel(label: 'Fleet'),
                   _MenuItem(
                     icon: Icons.directions_car_rounded,
@@ -194,36 +224,32 @@ class ProfileScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 8),
-
-                  // ── Activity section ─────────────────
-                  _SectionLabel(label: 'Activity'),
-                  Obx(
-                    () => _MenuItem(
-                      icon: Icons.history_rounded,
-                      iconBg: AppColors.purpleSoft,
-                      iconColor: AppColors.purple,
-                      label: 'Trip History',
-                      isLoading: controller.isLoading.value,
-                      onTap: () {
-                        if (Get.isRegistered<HomeController>()) {
-                          Get.find<HomeController>().changeTab(2);
-                        }
-                      },
-                    ),
-                  ),
-                  Obx(
-                    () => _MenuItem(
-                      icon: Icons.notifications_outlined,
-                      iconBg: const Color(0xFFFFF4E6),
-                      iconColor: AppColors.amber,
-                      label: 'Notifications',
-                      trailingObs: controller.notificationCount,
-                      isLoading: controller.isLoading.value,
-                      onTap: () => Get.to(() => const NotificationsScreen()),
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
+                        _SectionLabel(label: 'Activity'),
+                        _MenuItem(
+                          icon: Icons.history_rounded,
+                          iconBg: AppColors.purpleSoft,
+                          iconColor: AppColors.purple,
+                          label: 'Trip History',
+                          isLoading: controller.isLoading.value,
+                          onTap: () {
+                            if (Get.isRegistered<HomeController>()) {
+                              Get.find<HomeController>().changeTab(2);
+                            }
+                          },
+                        ),
+                        _MenuItem(
+                          icon: Icons.notifications_outlined,
+                          iconBg: const Color(0xFFFFF4E6),
+                          iconColor: AppColors.amber,
+                          label: 'Notifications',
+                          trailingObs: controller.notificationCount,
+                          isLoading: controller.isLoading.value,
+                          onTap: () => Get.to(() => const NotificationsScreen()),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                    );
+                  }),
 
                   // ── Account section ──────────────────
                   _SectionLabel(label: 'Account'),

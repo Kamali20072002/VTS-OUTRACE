@@ -9,6 +9,7 @@ import 'package:printing/printing.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/exceptions/app_exception.dart';
 import '../../../../core/utils/token_storage.dart';
+import '../../../../core/utils/cache_service.dart';
 import '../../domain/models/profile_model.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../../../login/presentation/pages/login_screen.dart';
@@ -31,16 +32,11 @@ class ProfileController extends GetxController {
   // ── Vehicles ───────────────────────────────
   final RxList<VehicleModel> vehicles = <VehicleModel>[].obs;
 
-  // ── Devices ────────────────────────────────
-  final RxList<DeviceModel> myDevices = <DeviceModel>[].obs;
-
   // ── Loading states ─────────────────────────
   final RxBool isLoading          = false.obs;
   final RxBool isUpdating         = false.obs;
   final RxBool isChangingPass     = false.obs;
   final RxBool isLoadingDevices   = false.obs;
-  final RxBool isActivatingDevice = false.obs;
-  final RxBool isAddingVehicle    = false.obs;
 
   // ── Validation states ──────────────────────
   final RxBool isProfileChanged    = false.obs;
@@ -60,18 +56,10 @@ class ProfileController extends GetxController {
   final RxBool showNewPass  = false.obs;
   final RxBool showConfPass = false.obs;
 
-  // ── Add vehicle form ───────────────────────
-  final TextEditingController regNoCtrl  = TextEditingController();
-  final TextEditingController vModelCtrl = TextEditingController();
-  final TextEditingController imeiCtrl   = TextEditingController();
-  final RxString selectedType     = 'CAR'.obs;
-  final RxString selectedDeviceId = ''.obs;
-
   @override
   void onInit() {
     super.onInit();
     refreshProfile();
-    loadMyDevices();
 
     // Listeners for change detection and validation
     nameEditCtrl.addListener(_validateProfile);
@@ -168,6 +156,14 @@ class ProfileController extends GetxController {
         totalKm.value          = stats.totalKm;
         notificationCount.value = stats.notificationCount;
 
+        // Fetch actual alerts to sync count if needed
+        try {
+          final alerts = await _repo.getMyAlerts(forceRefresh: forceRefresh);
+          notificationCount.value = alerts.length;
+        } catch (e) {
+          debugPrint('Alerts sync error: $e');
+        }
+
         await TokenStorage.saveUser(
           userId: user.userId,
           name: user.name,
@@ -201,100 +197,6 @@ class ProfileController extends GetxController {
     if (savedEmail != null) email.value = savedEmail;
   }
 
-  // ── Load my devices ────────────────────────
-  Future<void> loadMyDevices({bool forceRefresh = false}) async {
-    if (myDevices.isEmpty) {
-      isLoadingDevices.value = true;
-    }
-    try {
-      final list = await _repo.getMyDevices(forceRefresh: forceRefresh);
-      myDevices.value = list;
-    } catch (e) {
-      debugPrint('Devices Error: $e');
-      if (Get.context != null) {
-        _showError(Get.context!, 'Failed to load devices');
-      }
-    } finally {
-      isLoadingDevices.value = false;
-    }
-  }
-
-
- // ── Activate device ────────────────────────
-  Future<void> activateDevice(BuildContext context) async {
-    final imei = imeiCtrl.text.trim();
-    if (imei.isEmpty) {
-      _showError(context, 'Please enter IMEI number');
-      return;
-    }
-    isActivatingDevice.value = true;
-    try {
-      final device = await _repo.activateDevice(imei);
-      await loadMyDevices();
-      imeiCtrl.clear();
-      _showSuccess(context, 'Activated!', 'Device activated successfully');
-    } on HttpException catch (e) {
-      _showError(context, e.message);
-    } catch (e) {
-      _showError(context, 'Something went wrong. Please try again.');
-    } finally {
-      isActivatingDevice.value = false;
-    }
-  }
-
-  // ── Add vehicle ────────────────────────────
-  Future<void> addVehicle(BuildContext context) async {
-    final regNo  = regNoCtrl.text.trim();
-    final model  = vModelCtrl.text.trim();
-    final type   = selectedType.value;
-    final devId  = selectedDeviceId.value;
-
-    if (regNo.isEmpty) {
-      _showError(context, 'Please enter registration number');
-      return;
-    }
-    if (model.isEmpty) {
-      _showError(context, 'Please enter vehicle model');
-      return;
-    }
-    if (devId.isEmpty) {
-      _showError(context, 'Please select a device');
-      return;
-    }
-
-    isAddingVehicle.value = true;
-    try {
-      final json = await _repo.addVehicle(
-        registrationNumber: regNo,
-        model: model,
-        vehicleType: type,
-        deviceId: devId,
-      );
-
-      if (json['error'] == true) {
-        _showError(context, json['message'] as String? ?? 'Failed to add vehicle');
-        return;
-      }
-
-      // Refresh vehicles
-      await loadMyDevices();
-
-      regNoCtrl.clear();
-      vModelCtrl.clear();
-      selectedDeviceId.value = '';
-      selectedType.value = 'CAR';
-
-      _showSuccess(context, 'Vehicle Added!', 'Your vehicle has been added successfully');
-      Get.back();
-      Get.back();
-    } on HttpException catch (e) {
-      _showError(context, e.message);
-    } catch (e) {
-      _showError(context, 'Something went wrong. Please try again.');
-    } finally {
-      isAddingVehicle.value = false;
-    }
-  }
   // ── Update profile ─────────────────────────
   Future<void> updateProfile(BuildContext context) async {
     final newName  = nameEditCtrl.text.trim();
@@ -399,6 +301,7 @@ class ProfileController extends GetxController {
       cancelText: 'Cancel',
       onCancel: () {},
       onConfirm: () async {
+        await CacheService.clearAll();
         await TokenStorage.clearAll();
         
         Get.offAll(

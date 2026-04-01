@@ -8,6 +8,8 @@ import '../../../../core/exceptions/app_exception.dart';
 import '../../domain/models/profile_model.dart';
 import '../../domain/repositories/profile_repository.dart';
 import 'profile_controller.dart';
+import '../../../home/presentation/controller/home_controller.dart';
+import '../../../track/presentation/controller/track_controller.dart';
 
 class VehiclesController extends GetxController {
   final ProfileRepository _repo = ProfileRepository();
@@ -71,6 +73,7 @@ class VehiclesController extends GetxController {
     super.onInit();
     loadVehicles();
     loadVehicleTypes();
+    loadUnassignedDevices(forceRefresh: true);
 
     regNoCtrl.addListener(() {
       final val = regNoCtrl.text.trim();
@@ -276,11 +279,11 @@ class VehiclesController extends GetxController {
   }
 
   // ── Load vehicles ───────────────────────────────────────────
-  Future<void> loadVehicles() async {
+  Future<void> loadVehicles({bool forceRefresh = false}) async {
     isLoading.value = true;
     try {
-      final list = await _repo.getMyVehicles();
-      vehicles.value = list;
+      final list = await _repo.getMyVehicles(forceRefresh: forceRefresh);
+      vehicles.assignAll(list);
       await _generateMarkers(zoom: currentZoom.value);
       // If map is already ready, fit all markers
       fitMarkers();
@@ -309,11 +312,25 @@ class VehiclesController extends GetxController {
     }
   }
 
-  Future<void> loadUnassignedDevices() async {
+  Future<void> loadUnassignedDevices({bool forceRefresh = false}) async {
     isLoadingDevices.value = true;
     try {
-      final list = await _repo.getUnassignedDevices();
-      availableDevices.value = list;
+      final list = await _repo.getUnassignedDevices(forceRefresh: forceRefresh);
+      availableDevices.assignAll(list);
+      
+      // Update selected device ID if needed
+      if (list.isNotEmpty) {
+        final currentId = selectedDeviceId.value;
+        final exists = list.any((d) => d.id == currentId);
+        
+        if (currentId.isEmpty || !exists) {
+          selectedDeviceId.value = list.first.id;
+        }
+      } else {
+        selectedDeviceId.value = '';
+      }
+      
+      debugPrint('Loaded ${list.length} unassigned devices');
     } catch (e) {
       debugPrint('Load Unassigned Devices Error: $e');
       if (Get.context != null) {
@@ -333,7 +350,7 @@ class VehiclesController extends GetxController {
     isActivatingDevice.value = true;
     try {
       await _repo.activateDevice(imei);
-      await loadUnassignedDevices();
+      await loadUnassignedDevices(forceRefresh: true);
       imeiCtrl.clear();
       _showSuccess(context, 'Success', 'Device activated successfully');
       return true;
@@ -348,15 +365,15 @@ class VehiclesController extends GetxController {
     }
   }
 
-  Future<void> addVehicle(BuildContext context) async {
+  Future<bool> addVehicle(BuildContext context) async {
     final regNo = regNoCtrl.text.trim();
     final model = modelCtrl.text.trim();
     final type  = selectedType.value;
     final devId = selectedDeviceId.value;
 
-    if (!_validateRegNo(regNo, showError: true)) return;
-    if (model.isEmpty) { _showError(context, 'Please enter vehicle model'); return; }
-    if (devId.isEmpty) { _showError(context, 'Please select a device'); return; }
+    if (!_validateRegNo(regNo, showError: true)) return false;
+    if (model.isEmpty) { _showError(context, 'Please enter vehicle model'); return false; }
+    if (devId.isEmpty) { _showError(context, 'Please select a device'); return false; }
 
     isAddingVehicle.value = true;
     try {
@@ -369,22 +386,31 @@ class VehiclesController extends GetxController {
 
       if (json['error'] == true) {
         _showError(context, json['message'] as String? ?? 'Failed to add vehicle');
-        return;
+        return false;
       }
 
-      await loadVehicles();
-      _profileController.vehicleCount.value = vehicles.length;
+      await loadVehicles(forceRefresh: true);
+      await loadUnassignedDevices(forceRefresh: true); // Refresh to remove assigned device
+      await _profileController.refreshProfile(forceRefresh: true);
 
+      // Refresh HomeController and TrackController data to ensure dashboard updates
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().loadActiveVehicles(forceRefresh: true);
+      }
+      if (Get.isRegistered<TrackController>()) {
+        Get.find<TrackController>().loadVehicles(forceRefresh: true);
+      }
+
+      // Reset form
       regNoCtrl.clear();
       modelCtrl.clear();
       selectedDeviceId.value = '';
-
+      
       _showSuccess(context, 'Success', 'Vehicle registered successfully');
-      Get.back();
-    } on HttpException catch (e) {
-      _showError(context, e.message);
+      return true;
     } catch (e) {
-      _showError(context, 'Something went wrong. Please try again.');
+      _showError(context, 'An unexpected error occurred');
+      return false;
     } finally {
       isAddingVehicle.value = false;
     }

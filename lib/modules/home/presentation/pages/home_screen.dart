@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -29,24 +30,31 @@ class HomeScreen extends StatelessWidget {
     // Initialize VehiclesController for search navigation
     Get.find<VehiclesController>();
 
-    return Obx(() => Scaffold(
-      backgroundColor: AppColors.white,
-      extendBody: true,
-      resizeToAvoidBottomInset: controller.currentIndex.value != 1,
-      body: IndexedStack(
-        index: controller.currentIndex.value,
-        children: const [
-          _HomePage(),
-          TrackScreen(),
-          TripsScreen(),
-          ProfileScreen(),
-        ],
-      ),
-      bottomNavigationBar: FloatingNavBar(
-        currentIndex: controller.currentIndex.value,
-        onTap: controller.changeTab,
-      ),
-    ));
+    return Obx(() {
+      final hasNoVehicles = controller.vehicles.isEmpty && !controller.isLoading.value;
+      final showNoVehiclesHome = hasNoVehicles && controller.currentIndex.value == 0;
+      
+      return Scaffold(
+        backgroundColor: AppColors.white,
+        extendBody: true,
+        resizeToAvoidBottomInset: controller.currentIndex.value != 1,
+        body: IndexedStack(
+          index: controller.currentIndex.value,
+          children: [
+            showNoVehiclesHome ? const _NoVehiclesHome() : const _HomePage(),
+            const TrackScreen(),
+            const TripsScreen(),
+            const ProfileScreen(),
+          ],
+        ),
+        bottomNavigationBar: hasNoVehicles
+            ? null
+            : FloatingNavBar(
+                currentIndex: controller.currentIndex.value,
+                onTap: controller.changeTab,
+              ),
+      );
+    });
   }
 }
 
@@ -76,117 +84,11 @@ class _HomePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          // ── Header ──────────────────────────────────
-          Container(
-            color: AppColors.white,
-            padding: EdgeInsets.fromLTRB(20, topPad + 16, 20, 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Good Morning,',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Obx(() {
-                          if (controller.isLoading.value && profileController.name.value == 'User') {
-                            return Shimmer.fromColors(
-                              baseColor: Colors.grey[300]!,
-                              highlightColor: Colors.grey[100]!,
-                              child: Container(
-                                width: 120,
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ),
-                            );
-                          }
-                          return Text(
-                            profileController.name.value,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
-                            ),
-                          );
-                        }),
-                        const SizedBox(width: 6),
-                        const Text('👋', style: TextStyle(fontSize: 20)),
-                      ],
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    // Notification
-                    GestureDetector(
-                      onTap: () => Get.to(() => const NotificationsScreen()),
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: AppColors.bg,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.notifications_outlined,
-                              color: AppColors.textPrimary,
-                              size: 20,
-                            ),
-                          ),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: AppColors.red,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Avatar
-                    GestureDetector(
-                      onTap: () => controller.changeTab(3),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppColors.bg,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Center(
-                          child: Image.asset(
-                            'assets/icons/nav_profile.png',
-                            width: 24,
-                            height: 24,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          // Header with Name and Avatar
+          _buildHomeHeader(context, profileController, topPad),
+
+          // Summary Section
+          _buildHomeStats(controller),
 
           // ── Dark banner card ─────────────────────────
           Padding(
@@ -563,8 +465,9 @@ class _HomePage extends StatelessWidget {
           ),
         ],
       ),
-    ),);
-  }
+    ),
+  );
+}
 
   Widget _buildShimmerVehicleCard() {
     return Shimmer.fromColors(
@@ -723,6 +626,7 @@ class _VehicleCard extends StatelessWidget {
    
     
 
+
     return GestureDetector(
       onTap: () => Get.to(() => VehicleDetailsScreen(
             vehicleId: vehicle.vehicleId,
@@ -849,4 +753,556 @@ class _VehicleCard extends StatelessWidget {
         return 'assets/images/bmw_x6.jpg';
     }
   }
+}
+
+// ══════════════════════════════════════════════════════════
+// NO VEHICLES HOME
+// ══════════════════════════════════════════════════════════
+class _NoVehiclesHome extends StatelessWidget {
+  const _NoVehiclesHome();
+
+  @override
+  Widget build(BuildContext context) {
+    final profileController = Get.find<ProfileController>();
+    final controller = Get.find<HomeController>();
+    final topPad = MediaQuery.of(context).padding.top;
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        await controller.loadActiveVehicles(forceRefresh: true);
+        await profileController.refreshProfile(forceRefresh: true);
+      },
+      displacement: topPad + 20,
+      color: AppColors.purple,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            // Header with Name and Avatar
+            _buildHomeHeader(context, profileController, topPad),
+
+            // Summary Section
+            _buildHomeStats(controller),
+
+            // Fleet Section
+            Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8), // Reduced padding
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'FLEET',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12, // Reduced font size
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textTertiary,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                CustomPaint(
+                  painter: _DashedRectPainter(),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24), // Reduced padding
+                    child: Column(
+                      children: [
+                        Image.asset(
+                          'assets/gif/redcar.gif',
+                          height: 150, // Reduced gif height
+                          fit: BoxFit.contain,
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          'No Vehicles Added',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 18, // Reduced font size
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Kindly add a vehicle to explore more functionality and start tracking',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13, // Reduced font size
+                            color: AppColors.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                             if (Get.isRegistered<VehiclesController>()) {
+                               Get.find<VehiclesController>().loadUnassignedDevices();
+                             }
+                             Get.to(() => const AddVehicleScreen());
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppColors.dark,
+                            elevation: 0,
+                            side: const BorderSide(color: AppColors.border, width: 1.2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.add_rounded, size: 18),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Add Vehicle',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Lower Tiles
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                Expanded(child: _buildTile(
+                  'Live Tracking', 
+                  'Real-time GPS', 
+                  AppColors.green,
+                  onTap: () => controller.changeTab(1),
+                )),
+                const SizedBox(width: 12),
+                Expanded(child: _buildTile(
+                  'Trip History', 
+                  'All routes', 
+                  AppColors.purple,
+                  onTap: () => controller.changeTab(2),
+                )),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 12),
+
+          // Lower Grid
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                Expanded(child: _buildActionCard(
+                  'Add Vehicle', 
+                  'Register your first vehicle now', 
+                  Icons.home_rounded,
+                  onTap: () {
+                    if (Get.isRegistered<VehiclesController>()) {
+                      Get.find<VehiclesController>().loadUnassignedDevices();
+                    }
+                    Get.to(() => const AddVehicleScreen());
+                  },
+                )),
+                const SizedBox(width: 10),
+                Expanded(child: _buildActionCard(
+                  'Geofencing', 
+                  'Set zones and get alerts', 
+                  Icons.gps_fixed_rounded,
+                  onTap: () => controller.changeTab(1), // Placeholder
+                )),
+                const SizedBox(width: 10),
+                Expanded(child: _buildActionCard(
+                  'Alerts', 
+                  'Speed & zone alerts', 
+                  Icons.warning_amber_rounded,
+                  onTap: () => Get.to(() => const NotificationsScreen()),
+                )),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textTertiary, size: 24),
+          const SizedBox(height: 16),
+        ],
+      ),
+    ));
+  }
+
+  Widget _buildSummaryItem(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 18, // Reduced font size
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 9, // Reduced font size
+            fontWeight: FontWeight.w800,
+            color: AppColors.textTertiary,
+            letterSpacing: 0.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTile(String title, String subtitle, Color color, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12), // Reduced padding
+        decoration: BoxDecoration(
+          color: AppColors.bg.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.white, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: color, 
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.4),
+                    blurRadius: 3,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12, // Reduced font size
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10, // Reduced font size
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionCard(String title, String subtitle, IconData icon, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12), // Reduced padding
+        height: 120, // Reduced height
+        decoration: BoxDecoration(
+          color: AppColors.bg.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.white, width: 1.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8), // Reduced padding
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(icon, color: AppColors.purple, size: 16), // Reduced icon size
+            ),
+            const Spacer(),
+            Text(
+              title,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12, // Reduced font size
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 9, // Reduced font size
+                color: AppColors.textSecondary,
+                height: 1.3,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DashedRectPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.purple.withOpacity(0.3)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    const dashWidth = 8.0;
+    const dashSpace = 6.0;
+    const radius = 24.0;
+
+    final RRect rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      const Radius.circular(radius),
+    );
+
+    final Path path = Path()..addRRect(rrect);
+    
+    for (final PathMetric metric in path.computeMetrics()) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        canvas.drawPath(
+          metric.extractPath(distance, distance + dashWidth),
+          paint,
+        );
+        distance += dashWidth + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ══════════════════════════════════════════════════════════
+// SHARED HOME WIDGETS
+// ══════════════════════════════════════════════════════════
+
+Widget _buildHomeHeader(BuildContext context, ProfileController profileController, double topPad) {
+  final homeController = Get.find<HomeController>();
+
+  (String, String) getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return ('GOOD MORNING', '☀️');
+    if (hour < 17) return ('GOOD AFTERNOON', '🌤️');
+    if (hour < 21) return ('GOOD EVENING', '🌙');
+    return ('GOOD NIGHT', '😴');
+  }
+
+  final greeting = getGreeting();
+
+  return Container(
+    padding: EdgeInsets.fromLTRB(24, topPad + 12, 24, 32),
+    decoration: const BoxDecoration(
+      color: AppColors.dark,
+      borderRadius: BorderRadius.only(
+        bottomLeft: Radius.circular(28),
+        bottomRight: Radius.circular(28),
+      ),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: greeting.$1,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white.withOpacity(0.7),
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                  const TextSpan(text: ' '),
+                  TextSpan(
+                    text: greeting.$2,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 2),
+            Obx(() {
+              final nameParts = profileController.name.value.split(' ');
+              return RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: nameParts.first,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    if (nameParts.length > 1)
+                      TextSpan(
+                        text: ' ${nameParts.sublist(1).join(' ')}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.purpleLight,
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+        Obx(() {
+          final name = profileController.name.value;
+          final initials = name.isNotEmpty 
+              ? name.split(' ').take(2).map((e) => e[0]).join().toUpperCase()
+              : 'U';
+          return GestureDetector(
+            onTap: () => homeController.changeTab(3),
+            child: Stack(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.purple.withOpacity(0.5), width: 2),
+                    color: AppColors.dark2,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.dark2,
+                        AppColors.dark3.withOpacity(0.5),
+                      ],
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      initials,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 2,
+                  bottom: 2,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: AppColors.green,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.dark, width: 1.5),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    ),
+  );
+}
+
+Widget _buildHomeStats(HomeController controller) {
+  return Transform.translate(
+    offset: const Offset(0, -16),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Obx(() => Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildHomeSummaryItem(controller.totalVehicles.toString(), 'VEHICLES'),
+            Container(width: 1, height: 24, color: AppColors.border),
+            _buildHomeSummaryItem(controller.onlineVehicles.toString(), 'ONLINE'),
+            Container(width: 1, height: 24, color: AppColors.border),
+            _buildHomeSummaryItem('${Get.find<ProfileController>().totalKm.value} km', 'TRACKED'),
+          ],
+        )),
+      ),
+    ),
+  );
+}
+
+Widget _buildHomeSummaryItem(String value, String label) {
+  return Column(
+    children: [
+      Text(
+        value,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 18,
+          fontWeight: FontWeight.w800,
+          color: AppColors.textPrimary,
+        ),
+      ),
+      const SizedBox(height: 2),
+      Text(
+        label,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          color: AppColors.textTertiary,
+          letterSpacing: 0.4,
+        ),
+      ),
+    ],
+  );
 }
