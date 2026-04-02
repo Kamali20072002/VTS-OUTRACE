@@ -1,6 +1,9 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:outrace/core/utils/firebase_messaging_utils.dart';
 import 'package:outrace/widgets/loading_screen.dart';
 import 'theme/app_theme.dart';
 import 'modules/splash/presentation/pages/splash_screen.dart';
@@ -9,8 +12,17 @@ import 'core/utils/token_storage.dart';
 void main() async {
   // 1. Ensure Flutter framework is initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. Initialize Firebase
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    await FirebaseMessagingUtils.initialize();
+  } catch (e) {
+    debugPrint('Firebase initialization failed: $e');
+  }
   
-  // 2. Set preferred system UI styles
+  // 3. Set preferred system UI styles
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,

@@ -9,12 +9,14 @@ class LoginRepository {
     required String email,
     required String phoneNumber,
     required String password,
+    String? fcmToken,
   }) async {
     final json = await _api.register(
       name: name,
       email: email,
       phoneNumber: phoneNumber,
       password: password,
+      fcmToken: fcmToken,
     );
     return RegisterResponse.fromJson(json);
   }
@@ -27,8 +29,13 @@ class LoginRepository {
   Future<LoginOtpResponse> loginOtp({
     required String email,
     required String otpCode,
+    String? fcmToken,
   }) async {
-    final json = await _api.loginOtp(email: email, otpCode: otpCode);
+    final json = await _api.loginOtp(
+      email: email,
+      otpCode: otpCode,
+      fcmToken: fcmToken,
+    );
     return LoginOtpResponse.fromJson(json);
   }
 

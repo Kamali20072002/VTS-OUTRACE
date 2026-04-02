@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:notix_pro/notix_pro.dart';
+import '../../../../core/utils/firebase_messaging_utils.dart';
 import '../../../../core/exceptions/app_exception.dart';
 import '../../../../core/utils/token_storage.dart';
 import '../../../login/domain/repositories/login_repository.dart';
@@ -77,9 +78,11 @@ class OtpController extends GetxController {
     isLoading.value = true;
     errorText.value = '';
     try {
+      final fcmToken = await FirebaseMessagingUtils.getFcmToken();
       final response = await _repo.loginOtp(
         email: email,
         otpCode: otp.value,
+        fcmToken: fcmToken,
       );
 
       if (response.error) {

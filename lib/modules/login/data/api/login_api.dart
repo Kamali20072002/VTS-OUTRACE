@@ -14,6 +14,7 @@ class LoginApiCalls {
     required String email,
     required String phoneNumber,
     required String password,
+    String? fcmToken,
   }) async {
     try {
       final response = await http
@@ -26,6 +27,7 @@ class LoginApiCalls {
               'phone_number': int.tryParse(phoneNumber) ?? phoneNumber,
               'password': password,
               'role_id': 2,
+              'fcmToken': fcmToken,
             }),
           )
           .timeout(
@@ -87,6 +89,7 @@ class LoginApiCalls {
   Future<Map<String, dynamic>> loginOtp({
     required String email,
     required String otpCode,
+    String? fcmToken,
   }) async {
     try {
       final response = await http
@@ -96,6 +99,7 @@ class LoginApiCalls {
             body: jsonEncode({
               'email': email,
               'otpCode': otpCode,
+              'fcmToken': fcmToken,
             }),
           )
           .timeout(

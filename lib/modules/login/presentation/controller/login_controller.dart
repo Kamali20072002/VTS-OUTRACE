@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:notix_pro/notix_pro.dart';
+import '../../../../core/utils/firebase_messaging_utils.dart';
 import '../../../../core/exceptions/app_exception.dart';
 import '../../../../core/utils/token_storage.dart';
 import '../../domain/repositories/login_repository.dart';
@@ -246,11 +247,13 @@ class LoginController extends GetxController {
 
     isRegLoading.value = true;
     try {
+      final fcmToken = await FirebaseMessagingUtils.getFcmToken();
       final response = await _repo.register(
         name: name,
         email: email,
         phoneNumber: phone,
         password: password,
+        fcmToken: fcmToken,
       );
 
       if (response.error) {
