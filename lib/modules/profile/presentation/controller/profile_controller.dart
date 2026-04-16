@@ -43,6 +43,7 @@ class ProfileController extends GetxController {
   final RxString profileError      = ''.obs;
   final RxBool isPasswordChanged   = false.obs;
   final RxString passwordError     = ''.obs;
+  final RxBool isPasswordFormValid = false.obs;
 
   // ── Edit profile controllers ───────────────
   final TextEditingController nameEditCtrl  = TextEditingController();
@@ -82,11 +83,23 @@ class ProfileController extends GetxController {
       profileError.value = 'Name cannot be empty';
     } else if (n.length > 20) {
       profileError.value = 'Name must be max 20 characters';
-    } else if (p.isNotEmpty && p.length != 10) {
-      profileError.value = 'Phone number must be 10 digits';
+    } else if (p.isNotEmpty) {
+      if (p.length != 10) {
+        profileError.value = 'Phone number must be 10 digits';
+      } else if (RegExp(r'^[0]+$').hasMatch(p)) {
+        profileError.value = 'Invalid phone number';
+      } else {
+        profileError.value = '';
+      }
     } else {
       profileError.value = '';
     }
+  }
+
+  bool _isValidPassword(String password) {
+    // Min 6 max 15, at least one upper, one lower, one number and one special char
+    return RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,15}$')
+        .hasMatch(password);
   }
 
   void _validatePassword() {
@@ -98,13 +111,19 @@ class ProfileController extends GetxController {
 
     if (old.isEmpty && (n.isNotEmpty || c.isNotEmpty)) {
       passwordError.value = 'Current password is required';
-    } else if (n.isNotEmpty && n.length < 6) {
-      passwordError.value = 'New password must be at least 6 characters';
+    } else if (n.isNotEmpty && !_isValidPassword(n)) {
+      passwordError.value = 'Password must be 6-15 chars with Upper, Lower, Number & Special char';
+    } else if (n.isNotEmpty && old.isNotEmpty && n == old) {
+      passwordError.value = 'New password cannot be same as current password';
     } else if (n.isNotEmpty && c.isNotEmpty && n != c) {
       passwordError.value = 'Passwords do not match';
+    } else if (n.isNotEmpty && c.isEmpty) {
+      passwordError.value = 'Please confirm your new password';
     } else {
       passwordError.value = '';
     }
+
+    isPasswordFormValid.value = old.isNotEmpty && n.isNotEmpty && c.isNotEmpty && passwordError.value.isEmpty;
   }
 
   @override
@@ -131,6 +150,7 @@ class ProfileController extends GetxController {
     confPassCtrl.clear();
     passwordError.value = '';
     isPasswordChanged.value = false;
+    isPasswordFormValid.value = false;
   }
 
   // ── Load profile ───────────────────────────
@@ -207,6 +227,17 @@ class ProfileController extends GetxController {
       return;
     }
 
+    if (newPhone.isNotEmpty) {
+      if (newPhone.length != 10) {
+        _showError(context, 'Phone number must be 10 digits');
+        return;
+      }
+      if (RegExp(r'^[0]+$').hasMatch(newPhone)) {
+        _showError(context, 'Invalid phone number');
+        return;
+      }
+    }
+
     isUpdating.value = true;
     try {
       final json = await _repo.updateProfile(
@@ -250,8 +281,12 @@ class ProfileController extends GetxController {
       _showError(context, 'Please enter your current password');
       return;
     }
-    if (newPass.length < 6) {
-      _showError(context, 'New password must be at least 6 characters');
+    if (!_isValidPassword(newPass)) {
+      _showError(context, 'Password must be 6-15 chars with Upper, Lower, Number & Special char');
+      return;
+    }
+    if (newPass == oldPass) {
+      _showError(context, 'New password cannot be same as current password');
       return;
     }
     if (newPass != confPass) {

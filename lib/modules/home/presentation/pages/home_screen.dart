@@ -1129,6 +1129,7 @@ Widget _buildHomeHeader(BuildContext context, ProfileController profileControlle
 
   return Container(
     padding: EdgeInsets.fromLTRB(24, topPad + 12, 24, 32),
+    clipBehavior: Clip.antiAlias,
     decoration: const BoxDecoration(
       color: AppColors.dark,
       borderRadius: BorderRadius.only(
@@ -1136,114 +1137,156 @@ Widget _buildHomeHeader(BuildContext context, ProfileController profileControlle
         bottomRight: Radius.circular(28),
       ),
     ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    child: Stack(
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: greeting.$1,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white.withOpacity(0.7),
-                      letterSpacing: 1.1,
-                    ),
-                  ),
-                  const TextSpan(text: ' '),
-                  TextSpan(
-                    text: greeting.$2,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
+        // Decorative purple particles
+        Positioned(
+          top: -30,
+          right: -20,
+          child: Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.purple.withOpacity(0.12),
             ),
-            const SizedBox(height: 2),
-            Obx(() {
-              final nameParts = profileController.name.value.split(' ');
-              return RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: nameParts.first,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                    if (nameParts.length > 1)
+          ),
+        ),
+        Positioned(
+          bottom: -40,
+          left: -15,
+          child: Container(
+            width: 90,
+            height: 90,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.purple.withOpacity(0.08),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 20,
+          left: 60,
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.purple.withOpacity(0.05),
+            ),
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    children: [
                       TextSpan(
-                        text: ' ${nameParts.sublist(1).join(' ')}',
+                        text: greeting.$1,
                         style: GoogleFonts.plusJakartaSans(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.purpleLight,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withOpacity(0.7),
+                          letterSpacing: 1.1,
                         ),
                       ),
+                      const TextSpan(text: ' '),
+                      TextSpan(
+                        text: greeting.$2,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Obx(() {
+                  final nameParts = profileController.name.value.split(' ');
+                  return RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: nameParts.first,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        if (nameParts.length > 1)
+                          TextSpan(
+                            text: ' ${nameParts.sublist(1).join(' ')}',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.purpleLight,
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+            Obx(() {
+              final name = profileController.name.value;
+              final initials = name.isNotEmpty
+                  ? name.split(' ').take(2).map((e) => e[0]).join().toUpperCase()
+                  : 'U';
+              return GestureDetector(
+                onTap: () => homeController.changeTab(3),
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: AppColors.purple.withOpacity(0.5), width: 2),
+                        color: AppColors.dark2,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.dark2,
+                            AppColors.dark3.withOpacity(0.5),
+                          ],
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          initials,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 2,
+                      bottom: 2,
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: AppColors.green,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.dark, width: 1.5),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               );
             }),
           ],
         ),
-        Obx(() {
-          final name = profileController.name.value;
-          final initials = name.isNotEmpty 
-              ? name.split(' ').take(2).map((e) => e[0]).join().toUpperCase()
-              : 'U';
-          return GestureDetector(
-            onTap: () => homeController.changeTab(3),
-            child: Stack(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.purple.withOpacity(0.5), width: 2),
-                    color: AppColors.dark2,
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.dark2,
-                        AppColors.dark3.withOpacity(0.5),
-                      ],
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      initials,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  right: 2,
-                  bottom: 2,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: AppColors.green,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.dark, width: 1.5),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }),
       ],
     ),
   );

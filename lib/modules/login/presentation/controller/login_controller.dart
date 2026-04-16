@@ -75,18 +75,28 @@ class LoginController extends GetxController {
     regPassError.value = '';
   }
 
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
+  bool _isValidPassword(String password) {
+    // Min 6 max 15, at least one upper, one lower, one number and one special char
+    return RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,15}$')
+        .hasMatch(password);
+  }
+
   void _validateLogin() {
     final email = emailCtrl.text.trim();
     final pass = passCtrl.text.trim();
 
-    if (email.isNotEmpty && !email.contains('@')) {
+    if (email.isNotEmpty && !_isValidEmail(email)) {
       loginEmailError.value = 'Invalid email address';
     } else {
       loginEmailError.value = '';
     }
 
-    if (loginMethod.value == 'password' && pass.isNotEmpty && pass.length < 6) {
-      loginPassError.value = 'Password too short';
+    if (loginMethod.value == 'password' && pass.isNotEmpty && !_isValidPassword(pass)) {
+      loginPassError.value = 'Password must be 6-15 chars with Upper, Lower, Number & Special char';
     } else {
       loginPassError.value = '';
     }
@@ -98,26 +108,32 @@ class LoginController extends GetxController {
     final phone = phoneCtrl.text.trim();
     final pass = passwordCtrl.text.trim();
 
-    if (name.isNotEmpty && name.length > 20) {
-      regNameError.value = 'Max 20 characters';
+    if (name.isNotEmpty && (name.length < 3 || name.length > 20)) {
+      regNameError.value = name.length < 3 ? 'Min 3 characters' : 'Max 20 characters';
     } else {
       regNameError.value = '';
     }
 
-    if (email.isNotEmpty && !email.contains('@')) {
+    if (email.isNotEmpty && !_isValidEmail(email)) {
       regEmailError.value = 'Invalid email address';
     } else {
       regEmailError.value = '';
     }
 
-    if (phone.isNotEmpty && phone.length != 10) {
-      regPhoneError.value = 'Must be 10 digits';
+    if (phone.isNotEmpty) {
+      if (phone.length != 10) {
+        regPhoneError.value = 'Must be 10 digits';
+      } else if (RegExp(r'^[0]+$').hasMatch(phone)) {
+        regPhoneError.value = 'Invalid phone number';
+      } else {
+        regPhoneError.value = '';
+      }
     } else {
       regPhoneError.value = '';
     }
 
-    if (pass.isNotEmpty && pass.length < 6) {
-      regPassError.value = 'Min 6 characters';
+    if (pass.isNotEmpty && !_isValidPassword(pass)) {
+      regPassError.value = 'Password must be 6-15 chars with Upper, Lower, Number & Special char';
     } else {
       regPassError.value = '';
     }
@@ -139,8 +155,12 @@ class LoginController extends GetxController {
   Future<void> sendOtp(BuildContext context) async {
     final email = emailCtrl.text.trim();
 
-    if (email.isEmpty || !email.contains('@')) {
-      _showError(context, 'Please enter a valid email address');
+    if (email.isEmpty) {
+      loginEmailError.value = 'Email address is required';
+      return;
+    }
+    if (!_isValidEmail(email)) {
+      loginEmailError.value = 'Please enter a valid email address';
       return;
     }
 
@@ -174,12 +194,20 @@ class LoginController extends GetxController {
   final email    = emailCtrl.text.trim();
   final password = passCtrl.text.trim();
 
-  if (email.isEmpty || !email.contains('@')) {
-    _showError(context, 'Please enter a valid email address');
+  if (email.isEmpty) {
+    loginEmailError.value = 'Email address is required';
+    return;
+  }
+  if (!_isValidEmail(email)) {
+    loginEmailError.value = 'Please enter a valid email address';
     return;
   }
   if (password.isEmpty) {
-    _showError(context, 'Please enter your password');
+    loginPassError.value = 'Please enter your password';
+    return;
+  }
+  if (!_isValidPassword(password)) {
+    loginPassError.value = 'Password must be 6-15 chars with Upper, Lower, Number & Special char';
     return;
   }
 
@@ -228,22 +256,44 @@ class LoginController extends GetxController {
     final phone    = phoneCtrl.text.trim();
     final password = passwordCtrl.text.trim();
 
+    bool hasError = false;
+
     if (name.isEmpty) {
-      _showError(context, 'Name is required');
-      return;
+      regNameError.value = 'Full name is required';
+      hasError = true;
+    } else if (name.length < 3) {
+      regNameError.value = 'Name too short';
+      hasError = true;
     }
-    if (email.isEmpty || !email.contains('@')) {
-      _showError(context, 'Please enter a valid email address');
-      return;
+
+    if (email.isEmpty) {
+      regEmailError.value = 'Email address is required';
+      hasError = true;
+    } else if (!_isValidEmail(email)) {
+      regEmailError.value = 'Invalid email address';
+      hasError = true;
     }
-    if (phone.isEmpty || phone.length < 10) {
-      _showError(context, 'Please enter a valid phone number');
-      return;
+
+    if (phone.isEmpty) {
+      regPhoneError.value = 'Phone number is required';
+      hasError = true;
+    } else if (phone.length != 10) {
+      regPhoneError.value = 'Must be 10 digits';
+      hasError = true;
+    } else if (RegExp(r'^[0]+$').hasMatch(phone)) {
+      regPhoneError.value = 'Invalid phone number';
+      hasError = true;
     }
-    if (password.length < 6) {
-      _showError(context, 'Password must be at least 6 characters');
-      return;
+
+    if (password.isEmpty) {
+      regPassError.value = 'Password is required';
+      hasError = true;
+    } else if (!_isValidPassword(password)) {
+      regPassError.value = 'Password must be 6-15 chars with Upper, Lower, Number & Special char';
+      hasError = true;
     }
+
+    if (hasError) return;
 
     isRegLoading.value = true;
     try {

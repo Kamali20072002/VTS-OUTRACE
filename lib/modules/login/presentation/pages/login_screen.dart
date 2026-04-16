@@ -217,145 +217,41 @@ Obx(() => Row(
         const SizedBox(height: 20),
 
         // Email field
-        Text(
-          'Email Address',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        Obx(() => AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: controller.loginEmailError.value.isNotEmpty
-                  ? AppColors.red
-                  : controller.isFocused.value
-                      ? AppColors.purple
-                      : AppColors.border,
-              width: 1.5,
-            ),
-          ),
-          child: TextField(
-            controller: controller.emailCtrl,
-            focusNode: controller.focusNode,
-            keyboardType: TextInputType.emailAddress,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
-              color: AppColors.textPrimary,
-            ),
-            decoration: InputDecoration(
-              hintText: 'Enter your email address',
-              hintStyle: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
-                color: AppColors.textTertiary,
-              ),
-              prefixIcon: const Icon(
-                Icons.email_outlined,
-                color: AppColors.textTertiary,
-                size: 18,
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 14,
-                horizontal: 14,
-              ),
-            ),
-          ),
+        Obx(() => _InputField(
+          label: 'Email Address',
+          hint: 'Enter your email address',
+          controller: controller.emailCtrl,
+          focusNode: controller.focusNode,
+          isFocused: controller.isFocused.value,
+          icon: Icons.email_outlined,
+          inputType: TextInputType.emailAddress,
+          errorText: controller.loginEmailError.value,
         )),
-        Obx(() => controller.loginEmailError.value.isNotEmpty
-            ? Padding(
-                padding: const EdgeInsets.only(top: 4, left: 4),
-                child: Text(
-                  controller.loginEmailError.value,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    color: AppColors.red,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              )
-            : const SizedBox.shrink()),
 
         // Password field — only show if password method
         Obx(() => controller.loginMethod.value == 'password'
             ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 14),
-                  Text(
-                    'Password',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                  _InputField(
+                    label: 'Password',
+                    hint: 'Enter your password',
+                    controller: controller.passCtrl,
+                    icon: Icons.lock_outline_rounded,
+                    maxLength: 15,
+                    obscureText: !controller.showLoginPass.value,
+                    errorText: controller.loginPassError.value,
+                    suffixIcon: GestureDetector(
+                      onTap: () => controller.showLoginPass.toggle(),
+                      child: Icon(
+                        controller.showLoginPass.value
+                            ? Icons.visibility_rounded
+                            : Icons.visibility_off_rounded,
+                        color: AppColors.textTertiary,
+                        size: 18,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Obx(() => Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: controller.loginPassError.value.isNotEmpty
-                            ? AppColors.red
-                            : AppColors.border,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: TextField(
-                      controller: controller.passCtrl,
-                      obscureText: !controller.showLoginPass.value,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        color: AppColors.textPrimary,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Enter your password',
-                        hintStyle: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          color: AppColors.textTertiary,
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.lock_outline_rounded,
-                          color: AppColors.textTertiary,
-                          size: 18,
-                        ),
-                        suffixIcon: GestureDetector(
-                          onTap: () =>
-                              controller.showLoginPass.toggle(),
-                          child: Icon(
-                            controller.showLoginPass.value
-                                ? Icons.visibility_rounded
-                                : Icons.visibility_off_rounded,
-                            color: AppColors.textTertiary,
-                            size: 18,
-                          ),
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14,
-                          horizontal: 14,
-                        ),
-                      ),
-                    ),
-                  )),
-                  Obx(() => controller.loginPassError.value.isNotEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 4, left: 4),
-                          child: Text(
-                            controller.loginPassError.value,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              color: AppColors.red,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        )
-                      : const SizedBox.shrink()),
                 ],
               )
             : const SizedBox.shrink()),
@@ -547,74 +443,25 @@ class _RegisterForm extends StatelessWidget {
         )),
         const SizedBox(height: 14),
 
-        Text(
-          'Password',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Obx(() => Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: controller.regPassError.value.isNotEmpty
-                  ? AppColors.red
-                  : AppColors.border,
-              width: 1.5,
-            ),
-          ),
-          child: TextField(
-            controller: controller.passwordCtrl,
-            obscureText: !controller.showPassword.value,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
-              color: AppColors.textPrimary,
-            ),
-            decoration: InputDecoration(
-              hintText: 'Create a strong password',
-              hintStyle: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
-                color: AppColors.textTertiary,
-              ),
-              prefixIcon: const Icon(
-                Icons.lock_outline_rounded,
-                color: AppColors.textTertiary,
-                size: 18,
-              ),
-              suffixIcon: GestureDetector(
-                onTap: () => controller.showPassword.toggle(),
-                child: Icon(
-                  controller.showPassword.value
-                      ? Icons.visibility_rounded
-                      : Icons.visibility_off_rounded,
-                  color: AppColors.textTertiary,
-                  size: 18,
-                ),
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 14,
-                horizontal: 14,
-              ),
+        Obx(() => _InputField(
+          label: 'Password',
+          hint: 'Create a strong password',
+          controller: controller.passwordCtrl,
+          icon: Icons.lock_outline_rounded,
+          maxLength: 15,
+          obscureText: !controller.showPassword.value,
+          errorText: controller.regPassError.value,
+          suffixIcon: GestureDetector(
+            onTap: () => controller.showPassword.toggle(),
+            child: Icon(
+              controller.showPassword.value
+                  ? Icons.visibility_rounded
+                  : Icons.visibility_off_rounded,
+              color: AppColors.textTertiary,
+              size: 18,
             ),
           ),
         )),
-        Obx(() => controller.regPassError.value.isNotEmpty
-            ? Padding(
-                padding: const EdgeInsets.only(top: 4, left: 4),
-                child: Text(
-                  controller.regPassError.value,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    color: AppColors.red,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              )
-            : const SizedBox.shrink()),
 
         const SizedBox(height: 24),
 
@@ -678,6 +525,10 @@ class _InputField extends StatelessWidget {
   final TextInputType inputType;
   final int? maxLength;
   final String? errorText;
+  final bool obscureText;
+  final Widget? suffixIcon;
+  final FocusNode? focusNode;
+  final bool isFocused;
 
   const _InputField({
     required this.label,
@@ -687,6 +538,10 @@ class _InputField extends StatelessWidget {
     this.inputType = TextInputType.text,
     this.maxLength,
     this.errorText,
+    this.obscureText = false,
+    this.suffixIcon,
+    this.focusNode,
+    this.isFocused = false,
   });
 
   @override
@@ -703,20 +558,25 @@ class _InputField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: (errorText?.isNotEmpty ?? false)
                   ? AppColors.red
-                  : AppColors.border,
+                  : isFocused
+                      ? AppColors.purple
+                      : AppColors.border,
               width: 1.5,
             ),
           ),
           child: TextField(
             controller: controller,
+            focusNode: focusNode,
             keyboardType: inputType,
             maxLength: maxLength,
+            obscureText: obscureText,
             inputFormatters: (maxLength != null &&
                     (inputType == TextInputType.phone ||
                         inputType == TextInputType.number))
@@ -733,6 +593,7 @@ class _InputField extends StatelessWidget {
                 color: AppColors.textTertiary,
               ),
               prefixIcon: Icon(icon, color: AppColors.textTertiary, size: 18),
+              suffixIcon: suffixIcon,
               border: InputBorder.none,
               counterText: '',
               contentPadding: const EdgeInsets.symmetric(

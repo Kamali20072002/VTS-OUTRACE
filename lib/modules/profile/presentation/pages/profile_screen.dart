@@ -577,6 +577,7 @@ class ProfileScreen extends StatelessWidget {
                     controller: controller.oldPassCtrl,
                     showPass: controller.showOldPass.value,
                     onToggle: () => controller.showOldPass.toggle(),
+                    maxLength: 15,
                     errorText: controller.passwordError.value
                             .contains('Current')
                         ? controller.passwordError.value
@@ -590,8 +591,10 @@ class ProfileScreen extends StatelessWidget {
                     controller: controller.newPassCtrl,
                     showPass: controller.showNewPass.value,
                     onToggle: () => controller.showNewPass.toggle(),
+                    maxLength: 15,
                     errorText:
-                        controller.passwordError.value.contains('New')
+                        controller.passwordError.value.contains('New') ||
+                                controller.passwordError.value.contains('chars')
                             ? controller.passwordError.value
                             : null,
                   ),
@@ -603,8 +606,11 @@ class ProfileScreen extends StatelessWidget {
                     controller: controller.confPassCtrl,
                     showPass: controller.showConfPass.value,
                     onToggle: () => controller.showConfPass.toggle(),
+                    maxLength: 15,
                     errorText:
-                        controller.passwordError.value.contains('match')
+                        controller.passwordError.value.contains('match') ||
+                                controller.passwordError.value
+                                    .contains('confirm')
                             ? controller.passwordError.value
                             : null,
                   ),
@@ -613,8 +619,7 @@ class ProfileScreen extends StatelessWidget {
 
                 Obx(
                   () {
-                    final isEnabled = controller.isPasswordChanged.value &&
-                        controller.passwordError.value.isEmpty &&
+                    final isEnabled = controller.isPasswordFormValid.value &&
                         !controller.isChangingPass.value;
 
                     return GestureDetector(
@@ -812,7 +817,7 @@ class _BottomSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          child,
+          Flexible(child: child),
         ],
       ),
     );
@@ -906,6 +911,7 @@ class _PasswordField extends StatelessWidget {
   final bool showPass;
   final VoidCallback onToggle;
   final String? errorText;
+  final int? maxLength;
 
   const _PasswordField({
     required this.label,
@@ -913,6 +919,7 @@ class _PasswordField extends StatelessWidget {
     required this.showPass,
     required this.onToggle,
     this.errorText,
+    this.maxLength,
   });
 
   @override
@@ -940,6 +947,7 @@ class _PasswordField extends StatelessWidget {
           child: TextField(
             controller: controller,
             obscureText: !showPass,
+            maxLength: maxLength,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               color: AppColors.textPrimary,
@@ -958,6 +966,7 @@ class _PasswordField extends StatelessWidget {
                 ),
               ),
               border: InputBorder.none,
+              counterText: '',
               contentPadding: const EdgeInsets.symmetric(
                 vertical: 14,
                 horizontal: 14,

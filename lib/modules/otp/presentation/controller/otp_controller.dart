@@ -16,6 +16,7 @@ class OtpController extends GetxController {
 
   final RxInt    seconds   = 60.obs;
   final RxBool   canResend = false.obs;
+  final RxBool   isResending = false.obs;
   final RxString otp       = ''.obs;
   final RxBool   isLoading = false.obs;
   final RxString errorText = ''.obs;
@@ -130,8 +131,12 @@ class OtpController extends GetxController {
   }
 
   Future<void> resendOtp(BuildContext context, String email) async {
-    if (!canResend.value) return;
+    if (!canResend.value || isResending.value) return;
+    
+    isResending.value = true;
+    canResend.value = false; // Disable immediately to prevent multiple clicks
     errorText.value = '';
+    
     try {
       final response = await _repo.sendOtp(email);
       NotixToast.show(
@@ -145,8 +150,12 @@ class OtpController extends GetxController {
       startTimer();
     } on HttpException catch (e) {
       errorText.value = e.message;
+      canResend.value = true; // Re-enable if failed so user can try again
     } catch (e) {
       errorText.value = 'Failed to resend OTP.';
+      canResend.value = true; // Re-enable if failed
+    } finally {
+      isResending.value = false;
     }
   }
 }

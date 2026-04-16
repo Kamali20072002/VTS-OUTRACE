@@ -261,21 +261,30 @@ class OtpScreen extends StatelessWidget {
                         ),
                       ),
                       GestureDetector(
-                        onTap: controller.canResend.value
+                        onTap: (controller.canResend.value && !controller.isResending.value)
                             ? () => controller.resendOtp(context, phone)
                             : null,
-                        child: Text(
-                          controller.canResend.value
-                              ? 'Resend OTP'
-                              : 'Resend in ${controller.seconds.value}s',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: controller.canResend.value
-                                ? AppColors.purple
-                                : AppColors.textTertiary,
-                          ),
-                        ),
+                        child: controller.isResending.value
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.purple,
+                                ),
+                              )
+                            : Text(
+                                controller.canResend.value
+                                    ? 'Resend OTP'
+                                    : 'Resend in ${controller.seconds.value}s',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: controller.canResend.value
+                                      ? AppColors.purple
+                                      : AppColors.textTertiary,
+                                ),
+                              ),
                       ),
                     ],
                   )),
