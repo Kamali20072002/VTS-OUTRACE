@@ -3,8 +3,10 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:outrace/core/services/connectivity_service.dart';
 import 'package:outrace/core/utils/firebase_messaging_utils.dart';
 import 'package:outrace/widgets/loading_screen.dart';
+import 'package:outrace/widgets/no_internet_screen.dart';
 import 'theme/app_theme.dart';
 import 'modules/splash/presentation/pages/splash_screen.dart';
 import 'core/utils/token_storage.dart';
@@ -21,8 +23,11 @@ void main() async {
   } catch (e) {
     debugPrint('Firebase initialization failed: $e');
   }
+
+  // 3. Initialize Connectivity Service
+  Get.put(ConnectivityService(), permanent: true);
   
-  // 3. Set preferred system UI styles
+  // 4. Set preferred system UI styles
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -57,6 +62,18 @@ class OutraceApp extends StatelessWidget {
       theme: AppTheme.theme,
       // If session exists, bypass Splash/Onboarding and go directly to Loading
       home: isLoggedIn ? const LoadingScreen() : const SplashScreen(),
+      builder: (context, child) {
+        return Obx(() {
+          final connectivityService = Get.find<ConnectivityService>();
+          return Stack(
+            children: [
+              if (child != null) child,
+              if (!connectivityService.isConnected)
+                const NoInternetScreen(),
+            ],
+          );
+        });
+      },
     );
   }
 }
