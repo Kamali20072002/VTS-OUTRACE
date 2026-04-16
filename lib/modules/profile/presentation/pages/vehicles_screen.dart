@@ -526,6 +526,9 @@ class AddVehicleScreen extends StatelessWidget {
               label: 'Vehicle Model',
               controller: controller.modelCtrl,
               icon: 'assets/icons/car.png',
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9 ]')),
+              ],
             ),
             const SizedBox(height: 20),
 
