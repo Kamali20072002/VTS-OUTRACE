@@ -63,20 +63,22 @@ class _NoInternetScreenState extends State<NoInternetScreen> {
                 child: ElevatedButton(
                   onPressed: _isChecking
                       ? null
-                      : () async {
+                        : () async {
                           setState(() => _isChecking = true);
+                          debugPrint('🌐 Checking connectivity manually...');
                           
                           final connectivity = Get.find<ConnectivityService>();
                           // Manual check
                           await connectivity.checkInitialConnectivity();
                           
                           // Give a small delay for UI feel
-                          await Future.delayed(const Duration(milliseconds: 800));
+                          await Future.delayed(const Duration(milliseconds: 1000));
                           
                           if (mounted) {
                             setState(() => _isChecking = false);
                             
                             if (!connectivity.isConnected) {
+                              debugPrint('❌ Still offline.');
                               NotixDialog.show(
                                 context,
                                 type: NotixType.error,
@@ -88,9 +90,9 @@ class _NoInternetScreenState extends State<NoInternetScreen> {
                                 confirmText: 'Okay',
                                 onConfirm: () {},
                               );
+                            } else {
+                              debugPrint('✅ Online! Obx in main.dart should remove this screen.');
                             }
-                            // If isConnected is true, the Obx in main.dart will 
-                            // automatically remove this screen from the Stack.
                           }
                         },
                   style: ElevatedButton.styleFrom(

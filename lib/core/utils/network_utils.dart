@@ -60,11 +60,13 @@ class NetworkUtils {
       // 3. Save to cache
       await CacheService.save(url, body, ttlMinutes: ttlMinutes);
       return body;
-    } on TimeoutException {
-      throw HttpException(408, 'Request timed out. Please try again.');
-    } on http.ClientException {
-      throw HttpException(503, 'Network error. Please check your connection.');
     } catch (e) {
+      // API failed or no internet, try fallback to expired cache
+      final fallbackData = await CacheService.getExpiredFallback(url);
+      if (fallbackData != null) {
+        debugPrint('Fallback to cached data due to error: $url');
+        return fallbackData as Map<String, dynamic>;
+      }
       rethrow;
     }
   }

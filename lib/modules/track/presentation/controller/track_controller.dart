@@ -269,7 +269,7 @@ class TrackController extends GetxController {
   final RxBool isEngineOn = true.obs;
   final RxString speed = '0'.obs;
   final RxString distance = '0.0'.obs;
-  final RxString temperature = '0'.obs;
+  final RxString batteryLevel = '0'.obs;
 
   final RxDouble currentZoom = 14.0.obs;
   final RxSet<Marker> markers = <Marker>{}.obs;
@@ -442,7 +442,7 @@ class TrackController extends GetxController {
       final v = validVehicles.first;
       final pos = LatLng(v.latitude!, v.longitude!);
       bounds = LatLngBounds(southwest: pos, northeast: pos);
-      mapController?.animateCamera(CameraUpdate.newLatLngZoom(pos, 15));
+      mapController?.animateCamera(CameraUpdate.newLatLngZoom(pos, 16));
       return;
     } else {
       double minLat = validVehicles.first.latitude!;
@@ -473,14 +473,20 @@ class TrackController extends GetxController {
     
     // Update local reactive stats
     speed.value = v.speed?.toStringAsFixed(0) ?? '0';
-    distance.value = '10.8';
-    temperature.value = '28';
+    distance.value = v.odometer?.toStringAsFixed(1) ?? '0.0';
+    batteryLevel.value = v.batteryLevel?.toStringAsFixed(0) ?? '0';
     isEngineOn.value = v.isOnline;
     selectedIndex.value = vehicles.indexWhere((element) => element.deviceId == v.deviceId);
 
-    // Keep all markers in view but with the selected one centered
-    // This provides the "see both" behavior requested
-    fitAllMarkers(padding: 150.0);
+    // Focus camera on the selected vehicle
+    if (v.latitude != null && v.longitude != null) {
+      final pos = LatLng(v.latitude!, v.longitude!);
+      if (animate) {
+        mapController?.animateCamera(CameraUpdate.newLatLngZoom(pos, 16));
+      } else {
+        mapController?.moveCamera(CameraUpdate.newLatLngZoom(pos, 16));
+      }
+    }
     
     // We update markers but need to know which deviceId is selected
     _updateMarkers();
@@ -512,6 +518,7 @@ class TrackController extends GetxController {
         course: v.course ?? oldV.course,
         status: v.status ?? oldV.status,
         batteryLevel: v.batteryLevel ?? oldV.batteryLevel,
+        odometer: v.odometer ?? oldV.odometer,
         engineStatus: v.engineStatus ?? oldV.engineStatus,
         timestamp: v.timestamp ?? oldV.timestamp,
         // Ensure we don't overwrite model/reg if new data doesn't have it
@@ -523,14 +530,21 @@ class TrackController extends GetxController {
     // If this is the selected vehicle, update stats
     if (selectedIndex.value != -1 && vehicles[selectedIndex.value].deviceId == v.deviceId) {
       speed.value = v.speed?.toStringAsFixed(0) ?? '0';
+      distance.value = v.odometer?.toStringAsFixed(1) ?? '0.0';
+      batteryLevel.value = v.batteryLevel?.toStringAsFixed(0) ?? '0';
       isEngineOn.value = v.isOnline;
     }
 
     _updateMarkers();
     
-    // Automatically adjust view to include all vehicles including the newly updated one
-    // Use a slightly larger padding for live updates to avoid constant micro-zooming
-    fitAllMarkers(padding: 180.0);
+    // If the updated vehicle is the selected one, follow it
+    if (selectedIndex.value != -1 && vehicles[selectedIndex.value].deviceId == v.deviceId) {
+      if (v.latitude != null && v.longitude != null) {
+        mapController?.animateCamera(
+          CameraUpdate.newLatLng(LatLng(v.latitude!, v.longitude!)),
+        );
+      }
+    }
   }
 
   Future<void> fetchLatestGps(String deviceId, {bool updateUI = true}) async {
@@ -551,6 +565,7 @@ class TrackController extends GetxController {
               course: v.course ?? oldV.course,
               status: v.status ?? oldV.status,
               batteryLevel: v.batteryLevel ?? oldV.batteryLevel,
+              odometer: v.odometer ?? oldV.odometer,
               engineStatus: v.engineStatus ?? oldV.engineStatus,
               timestamp: v.timestamp ?? oldV.timestamp,
               model: (v.model.isNotEmpty) ? v.model : oldV.model,

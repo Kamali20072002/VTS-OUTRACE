@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 import '../../../../theme/app_theme.dart';
 
 class TripDetailsScreen extends StatefulWidget {
@@ -16,6 +18,9 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   GoogleMapController? _mapController;
   final Set<Polyline> _polylines = {};
   final Set<Marker> _markers = {};
+  
+  // Use the API key from AndroidManifest
+  static const String _googleMapsApiKey = 'AIzaSyD4_6anlN09mZ1H6hhnfryibQdAWfygUbo';
 
   // ── Derived data ────────────────────────────────────────────────────────────
   String get _vehicleReg =>
@@ -107,6 +112,63 @@ class _TripDetailsScreenState extends State<TripDetailsScreen> {
   void initState() {
     super.initState();
     _buildMapData();
+    _snapToRoads();
+  }
+
+  Future<void> _snapToRoads() async {
+    final path = widget.trip['path'] as List<dynamic>? ?? [];
+    if (path.isEmpty) return;
+
+    final List<LatLng> rawPoints = path
+        .map((p) => LatLng(
+              (p['lat'] as num).toDouble(),
+              (p['lon'] as num).toDouble(),
+            ))
+        .toList();
+
+    try {
+      final List<LatLng> snappedPoints = [];
+      
+      // Google Roads API has a limit of 100 points per request
+      for (int i = 0; i < rawPoints.length; i += 100) {
+        final int end = (i + 100 < rawPoints.length) ? i + 100 : rawPoints.length;
+        final batch = rawPoints.sublist(i, end);
+        
+        final String pathParam = batch.map((p) => '${p.latitude},${p.longitude}').join('|');
+        final String url = 'https://roads.googleapis.com/v1/snapToRoads?path=$pathParam&interpolate=true&key=$_googleMapsApiKey';
+
+        final response = await http.get(Uri.parse(url));
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final snappedPointsData = data['snappedPoints'] as List<dynamic>? ?? [];
+          
+          for (var sp in snappedPointsData) {
+            final loc = sp['location'];
+            snappedPoints.add(LatLng(
+              (loc['latitude'] as num).toDouble(),
+              (loc['longitude'] as num).toDouble(),
+            ));
+          }
+        }
+      }
+
+      if (snappedPoints.isNotEmpty && mounted) {
+        setState(() {
+          _polylines.clear();
+          _polylines.add(Polyline(
+            polylineId: const PolylineId('route_snapped'),
+            points: snappedPoints,
+            color: AppColors.purple,
+            width: 5,
+            jointType: JointType.round,
+            startCap: Cap.roundCap,
+            endCap: Cap.roundCap,
+          ));
+        });
+      }
+    } catch (e) {
+      debugPrint('Error snapping to roads: $e');
+    }
   }
 
   void _buildMapData() {

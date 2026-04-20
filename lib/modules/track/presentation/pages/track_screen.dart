@@ -37,13 +37,24 @@ class _TrackScreenState extends State<TrackScreen> {
       // but we handle the card position manually to keep it fixed at bottom.
       extendBody: true,
       resizeToAvoidBottomInset: false,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
+      body: RefreshIndicator(
+        onRefresh: () => controller.loadVehicles(forceRefresh: true),
+        color: AppColors.purple,
+        displacement: topPad + 60,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
 
           // ── Google Map full screen ───────────────────────────────────
           Obx(() => GoogleMap(
-            padding: EdgeInsets.only(bottom: 220, top: topPad + 60),
+            padding: const EdgeInsets.only(bottom: 120),
             onMapCreated: controller.onMapCreated,
             onCameraIdle: controller.onCameraIdle,
             onTap: (_) {
@@ -89,7 +100,16 @@ class _TrackScreenState extends State<TrackScreen> {
                   Row(
                     children: [
                       _TopBtn(
-                        onTap: () => Get.find<HomeController>().changeTab(0),
+                        onTap: () {
+                          // Force unfocus search if active
+                          _searchFocus.unfocus();
+                          
+                          if (Navigator.canPop(context)) {
+                            Get.back();
+                          } else {
+                            Get.find<HomeController>().changeTab(0);
+                          }
+                        },
                         child: const Icon(
                           Icons.arrow_back_ios_rounded,
                           size: 16,
@@ -208,7 +228,7 @@ class _TrackScreenState extends State<TrackScreen> {
                             const SizedBox(width: 8),
                             _FilterChip(
                               label: 'Offline',
-                              color: AppColors.textSecondary,
+                              color: AppColors.textTertiary,
                               count: controller.vehicles.where((v) => !v.isOnline).length,
                               isSelected: controller.statusFilter.value == 'OFFLINE',
                               onTap: () => controller.setStatusFilter('OFFLINE'),
@@ -261,11 +281,15 @@ class _TrackScreenState extends State<TrackScreen> {
                                   ),
                                 ),
                               )
-                            : ListView(
-                                shrinkWrap: true,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 8),
-                                children: [
+                            : RefreshIndicator(
+                                onRefresh: () => controller.loadVehicles(forceRefresh: true),
+                                color: AppColors.purple,
+                                child: ListView(
+                                  shrinkWrap: true,
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8),
+                                  children: [
                                   if (onlineVehicles.isNotEmpty) ...[
                                     _SearchHeader(label: 'ONLINE'),
                                     ...onlineVehicles.map((v) => _SearchItem(
@@ -284,8 +308,9 @@ class _TrackScreenState extends State<TrackScreen> {
                                   ],
                                 ],
                               ),
-                      ),
-                    );
+                            ),
+                          ),
+                      );
                   }),
                 ],
               ),
@@ -432,7 +457,7 @@ class _TrackScreenState extends State<TrackScreen> {
                                                   decoration: BoxDecoration(
                                                     color: vehicle.isOnline
                                                         ? AppColors.green
-                                                        : AppColors.red,
+                                                        : AppColors.textTertiary,
                                                     shape: BoxShape.circle,
                                                   ),
                                                 ),
@@ -448,7 +473,7 @@ class _TrackScreenState extends State<TrackScreen> {
                                                         FontWeight.w600,
                                                     color: vehicle.isOnline
                                                         ? AppColors.green
-                                                        : AppColors.red,
+                                                        : AppColors.textTertiary,
                                                   ),
                                                 ),
                                               ],
@@ -504,7 +529,7 @@ class _TrackScreenState extends State<TrackScreen> {
                                           icon: Icons.location_on_rounded,
                                           value:
                                               '${controller.distance.value} km',
-                                          label: 'Distance',
+                                          label: 'Odometer',
                                         ),
                                         Container(
                                           width: 1,
@@ -523,10 +548,10 @@ class _TrackScreenState extends State<TrackScreen> {
                                           color: AppColors.border,
                                         ),
                                         _TrackStat(
-                                          icon: Icons.thermostat_rounded,
+                                          icon: Icons.battery_charging_full_rounded,
                                           value:
-                                              '${controller.temperature.value}°C',
-                                          label: 'Temp',
+                                              '${controller.batteryLevel.value}%',
+                                          label: 'Battery',
                                         ),
                                       ],
                                     )
@@ -562,12 +587,17 @@ class _TrackScreenState extends State<TrackScreen> {
                           },
                         );
                       }),
-                ),
+                    ),
+                  ),
+                ],
               ),
+            ),
+          ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 
@@ -654,7 +684,7 @@ class _SearchItem extends StatelessWidget {
               width: 8,
               height: 8,
               decoration: BoxDecoration(
-                color: vehicle.isOnline ? AppColors.green : AppColors.red,
+                color: vehicle.isOnline ? AppColors.green : AppColors.textTertiary,
                 shape: BoxShape.circle,
               ),
             ),

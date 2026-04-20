@@ -5,6 +5,7 @@ import 'package:notix_pro/notix_pro.dart';
 import '../../../../widgets/map_marker_helper.dart';
 import '../../../profile/presentation/controller/profile_controller.dart';
 import '../../../trips/presentation/controller/trips_controller.dart';
+import '../../../track/presentation/controller/track_controller.dart';
 import '../../../track/domain/models/active_vehicle_model.dart';
 import '../../../track/domain/repositories/track_repository.dart';
 
@@ -278,6 +279,11 @@ class HomeController extends GetxController {
           homeScrollController.jumpTo(0.0);
         }
         loadActiveVehicles();
+        break;
+      case 1:
+        if (Get.isRegistered<TrackController>()) {
+          Get.find<TrackController>().loadVehicles();
+        }
         break;
       case 2:
         if (tripsScrollController.hasClients) {

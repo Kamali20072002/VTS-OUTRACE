@@ -16,6 +16,7 @@ class ActiveVehicleModel {
   final double? batteryLevel;
   final int? signalStrength;
   final String? status;
+  final double? odometer;
 
   ActiveVehicleModel({
     required this.id,
@@ -35,6 +36,7 @@ class ActiveVehicleModel {
     this.batteryLevel,
     this.signalStrength,
     this.status,
+    this.odometer,
   });
 
   factory ActiveVehicleModel.fromJson(Map<String, dynamic> json) {
@@ -84,6 +86,8 @@ class ActiveVehicleModel {
                     (deviceMap['battery_level'] as num?)?.toDouble(),
       signalStrength: json['signal_strength'] ?? deviceMap['signal_strength'],
       status: rawStatus?.toUpperCase(),
+      odometer: (json['odometer'] as num?)?.toDouble() ?? 
+                (deviceMap['odometer'] as num?)?.toDouble(),
     );
   }
 
@@ -132,6 +136,7 @@ class ActiveVehicleModel {
     double? batteryLevel,
     int? signalStrength,
     String? status,
+    double? odometer,
   }) {
     return ActiveVehicleModel(
       id: id ?? this.id,
@@ -151,6 +156,7 @@ class ActiveVehicleModel {
       batteryLevel: batteryLevel ?? this.batteryLevel,
       signalStrength: signalStrength ?? this.signalStrength,
       status: status ?? this.status,
+      odometer: odometer ?? this.odometer,
     );
   }
 }

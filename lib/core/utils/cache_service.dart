@@ -31,10 +31,23 @@ class CacheService {
       if (now - timestamp < ttl) {
         return data;
       } else {
-        // Cache expired
-        await prefs.remove('$_cachePrefix$key');
+        // Cache expired, but don't remove it yet - keep it as a fallback
         return null;
       }
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Retrieves data from cache even if it has expired (as a fallback).
+  static Future<dynamic> getExpiredFallback(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    final cachedString = prefs.getString('$_cachePrefix$key');
+    if (cachedString == null) return null;
+
+    try {
+      final cacheData = jsonDecode(cachedString) as Map<String, dynamic>;
+      return cacheData['data'];
     } catch (e) {
       return null;
     }

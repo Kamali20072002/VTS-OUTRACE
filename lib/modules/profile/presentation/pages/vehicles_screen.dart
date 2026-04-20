@@ -46,274 +46,290 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
       backgroundColor: AppColors.bg,
       extendBodyBehindAppBar: true,
       resizeToAvoidBottomInset: false,
-      body: Stack(
-        children: [
-          // Background Map
-          Positioned.fill(
-            child: Obx(
-              () => GoogleMap(
-                initialCameraPosition: _initialPosition,
-                onMapCreated: (GoogleMapController c) {
-                  if (!_mapController.isCompleted) {
-                    _mapController.complete(c);
-                  }
-                  controller.onMapCreated(c);
-                },
-                onCameraMove: (CameraPosition pos) =>
-                    controller.onCameraMove(pos),
-                markers: controller.markers.toSet(),
-                style: controller.mapStyle.value.isEmpty
-                    ? null
-                    : controller.mapStyle.value,
-                padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).size.height * 0.55),
-                myLocationButtonEnabled: false,
-                zoomControlsEnabled: false,
-                compassEnabled: false,
-              ),
-            ),
-          ),
-
-          // Custom Top App Bar floating over map
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            left: 16,
-            right: 16,
-            child: Row(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: AppColors.dark,
-                      size: 20,
-                    ),
-                    onPressed: () => Get.back(),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
+      body: RefreshIndicator(
+        onRefresh: () => controller.loadVehicles(forceRefresh: true),
+        color: AppColors.purple,
+        displacement: MediaQuery.of(context).padding.top + 80,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height,
+                child: Stack(
+                  children: [
+                    // Background Map
+                    Positioned.fill(
+                      child: Obx(
+                        () => GoogleMap(
+                          initialCameraPosition: _initialPosition,
+                          onMapCreated: (GoogleMapController c) {
+                            if (!_mapController.isCompleted) {
+                              _mapController.complete(c);
+                            }
+                            controller.onMapCreated(c);
+                          },
+                          onCameraMove: (CameraPosition pos) =>
+                              controller.onCameraMove(pos),
+                          markers: controller.markers.toSet(),
+                          style: controller.mapStyle.value.isEmpty
+                              ? null
+                              : controller.mapStyle.value,
+                          padding: EdgeInsets.only(
+                              bottom: MediaQuery.of(context).size.height * 0.55),
+                          myLocationButtonEnabled: false,
+                          zoomControlsEnabled: false,
+                          compassEnabled: false,
                         ),
-                      ],
-                    ),
-                    child: Text(
-                      'My Vehicle Locations',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.dark,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
 
-          // Draggable Bottom Sheet for the vehicles list
-          DraggableScrollableSheet(
-            initialChildSize: 0.55,
-            minChildSize: 0.3,
-            maxChildSize: 0.9,
-            builder: (context, scrollController) {
-              return Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.bg,
-                  borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(32)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 20,
-                      offset: Offset(0, -5),
-                    ),
-                  ],
-                ),
-                child: RefreshIndicator(
-                  onRefresh: () => controller.loadVehicles(forceRefresh: true),
-                  color: AppColors.purple,
-                  child: CustomScrollView(
-                    controller: scrollController,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    slivers: [
-                      SliverToBoxAdapter(
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 12),
-                            Container(
-                              width: 40,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: AppColors.border,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
+                    // Custom Top App Bar floating over map
+                    Positioned(
+                      top: MediaQuery.of(context).padding.top + 16,
+                      left: 16,
+                      right: 16,
+                      child: Row(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 12),
-                          ],
-                        ),
-                      ),
-                      SliverPersistentHeader(
-                        pinned: true,
-                        delegate: _StickyHeaderDelegate(
-                          height: 66,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 8),
-                            child: GestureDetector(
-                              onTap: () {
-                                controller.searchQuery.value = '';
-                                Get.to(
-                                  () => const SearchVehicleScreen(),
-                                  transition: Transition.fadeIn,
-                                );
-                              },
-                              child: Container(
-                                height: 50,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                decoration: BoxDecoration(
-                                  color: AppColors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border:
-                                      Border.all(color: AppColors.border),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.search_rounded,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      'Search by model, ID or reg no...',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        color: AppColors.textTertiary,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                color: AppColors.dark,
+                                size: 20,
                               ),
+                              onPressed: () => Get.back(),
                             ),
                           ),
-                        ),
-                      ),
-                      Obx(() {
-                        if (controller.isLoading.value) {
-                          return SliverPadding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 8),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) => VehicleListSkeleton(),
-                                childCount: 5,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 14,
                               ),
-                            ),
-                          );
-                        }
-
-                        if (controller.vehicles.isEmpty) {
-                          return SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Opacity(
-                                    opacity: 0.15,
-                                    child: Image.asset(
-                                      'assets/icons/car.png',
-                                      width: 140,
-                                      fit: BoxFit.contain,
-                                    ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.08),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 5),
                                   ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'No Vehicles Found',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.dark,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 80),
                                 ],
                               ),
+                              child: Text(
+                                'My Vehicle Locations',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.dark,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          );
-                        }
-
-                        return SliverPadding(
-                          padding: const EdgeInsets.only(
-                            left: 20,
-                            right: 20,
-                            top: 8,
-                            bottom: 100,
                           ),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final vehicle = controller.vehicles[index];
-                                return TweenAnimationBuilder<double>(
-                                  tween: Tween<double>(begin: 0, end: 1),
-                                  duration: Duration(
-                                    milliseconds: 300 + (index * 50),
+                        ],
+                      ),
+                    ),
+
+                    // Draggable Bottom Sheet for the vehicles list
+                    DraggableScrollableSheet(
+                      initialChildSize: 0.55,
+                      minChildSize: 0.3,
+                      maxChildSize: 0.9,
+                      builder: (context, scrollController) {
+                        return Container(
+                          decoration: const BoxDecoration(
+                            color: AppColors.bg,
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(32)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 20,
+                                offset: Offset(0, -5),
+                              ),
+                            ],
+                          ),
+                          child: RefreshIndicator(
+                            onRefresh: () => controller.loadVehicles(forceRefresh: true),
+                            color: AppColors.purple,
+                            child: CustomScrollView(
+                              controller: scrollController,
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              slivers: [
+                                SliverToBoxAdapter(
+                                  child: Column(
+                                    children: [
+                                      const SizedBox(height: 12),
+                                      Container(
+                                        width: 40,
+                                        height: 4,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.border,
+                                          borderRadius: BorderRadius.circular(2),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                    ],
                                   ),
-                                  curve: Curves.easeOut,
-                                  builder: (context, value, child) {
-                                    return Transform.translate(
-                                      offset: Offset(0, 50 * (1 - value)),
-                                      child: Opacity(
-                                        opacity: value,
-                                        child: child,
+                                ),
+                                SliverPersistentHeader(
+                                  pinned: true,
+                                  delegate: _StickyHeaderDelegate(
+                                    height: 66,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 20, vertical: 8),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          controller.searchQuery.value = '';
+                                          Get.to(
+                                            () => const SearchVehicleScreen(),
+                                            transition: Transition.fadeIn,
+                                          );
+                                        },
+                                        child: Container(
+                                          height: 50,
+                                          padding:
+                                              const EdgeInsets.symmetric(horizontal: 16),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.white,
+                                            borderRadius: BorderRadius.circular(16),
+                                            border:
+                                                Border.all(color: AppColors.border),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.search_rounded,
+                                                color: AppColors.textSecondary,
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Text(
+                                                'Search by model, ID or reg no...',
+                                                style: GoogleFonts.plusJakartaSans(
+                                                  color: AppColors.textTertiary,
+                                                  fontSize: 15,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Obx(() {
+                                  if (controller.isLoading.value) {
+                                    return SliverPadding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 20, vertical: 8),
+                                      sliver: SliverList(
+                                        delegate: SliverChildBuilderDelegate(
+                                          (context, index) => VehicleListSkeleton(),
+                                          childCount: 5,
+                                        ),
                                       ),
                                     );
-                                  },
-                                  child: _VehicleListCard(
-                                    vehicle: vehicle,
-                                    controller: controller,
-                                    listIndex: index,
-                                  ),
-                                );
-                              },
-                              childCount: controller.vehicles.length,
+                                  }
+
+                                  if (controller.vehicles.isEmpty) {
+                                    return SliverFillRemaining(
+                                      hasScrollBody: false,
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Opacity(
+                                              opacity: 0.15,
+                                              child: Image.asset(
+                                                'assets/icons/car.png',
+                                                width: 140,
+                                                fit: BoxFit.contain,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 16),
+                                            Text(
+                                              'No Vehicles Found',
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.dark,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 80),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }
+
+                                  return SliverPadding(
+                                    padding: const EdgeInsets.only(
+                                      left: 20,
+                                      right: 20,
+                                      top: 8,
+                                      bottom: 100,
+                                    ),
+                                    sliver: SliverList(
+                                      delegate: SliverChildBuilderDelegate(
+                                        (context, index) {
+                                          final vehicle = controller.vehicles[index];
+                                          return TweenAnimationBuilder<double>(
+                                            tween: Tween<double>(begin: 0, end: 1),
+                                            duration: Duration(
+                                              milliseconds: 300 + (index * 50),
+                                            ),
+                                            curve: Curves.easeOut,
+                                            builder: (context, value, child) {
+                                              return Transform.translate(
+                                                offset: Offset(0, 50 * (1 - value)),
+                                                child: Opacity(
+                                                  opacity: value,
+                                                  child: child,
+                                                ),
+                                              );
+                                            },
+                                            child: _VehicleListCard(
+                                              vehicle: vehicle,
+                                              controller: controller,
+                                              listIndex: index,
+                                            ),
+                                          );
+                                        },
+                                        childCount: controller.vehicles.length,
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              ],
                             ),
                           ),
                         );
-                      }),
-                    ],
-                  ),
+                      },
+                    ),
+                  ],
                 ),
-              );
-            },
-          ),
-        ],
+              ),
+            ),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
@@ -423,44 +439,61 @@ class _SearchVehicleScreenState extends State<SearchVehicleScreen> {
       body: Obx(() {
         if (controller.filteredVehicles.isEmpty) {
           final noVehicles = controller.vehicles.isEmpty;
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Opacity(
-                  opacity: 0.15,
-                  child: Image.asset(
-                    'assets/icons/car.png',
-                    width: 140,
-                    fit: BoxFit.contain,
+          return RefreshIndicator(
+            onRefresh: () => controller.loadVehicles(forceRefresh: true),
+            color: AppColors.purple,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height -
+                    AppBar().preferredSize.height -
+                    MediaQuery.of(context).padding.top,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Opacity(
+                        opacity: 0.15,
+                        child: Image.asset(
+                          'assets/icons/car.png',
+                          width: 140,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        noVehicles ? 'No Vehicles Found' : 'No matching vehicles',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.dark,
+                        ),
+                      ),
+                      const SizedBox(height: 100),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  noVehicles ? 'No Vehicles Found' : 'No matching vehicles',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.dark,
-                  ),
-                ),
-                const SizedBox(height: 100),
-              ],
+              ),
             ),
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          itemCount: controller.filteredVehicles.length,
-          itemBuilder: (context, index) {
-            final vehicle = controller.filteredVehicles[index];
-            return _VehicleListCard(
-              vehicle: vehicle,
-              controller: controller,
-              listIndex: index,
-            );
-          },
+        return RefreshIndicator(
+          onRefresh: () => controller.loadVehicles(forceRefresh: true),
+          color: AppColors.purple,
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            physics: const AlwaysScrollableScrollPhysics(),
+            itemCount: controller.filteredVehicles.length,
+            itemBuilder: (context, index) {
+              final vehicle = controller.filteredVehicles[index];
+              return _VehicleListCard(
+                vehicle: vehicle,
+                controller: controller,
+                listIndex: index,
+              );
+            },
+          ),
         );
       }),
     );

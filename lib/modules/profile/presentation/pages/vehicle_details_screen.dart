@@ -189,7 +189,7 @@ class VehicleDetailsScreen extends StatelessWidget {
                         if (!isLoading && vehicle?.recentTrips != null && vehicle!.recentTrips!.length > 2)
                           TextButton(
                             onPressed: () => Get.to(
-                              () => TripHistoryScreen(vehicle: vehicle),
+                              () => TripHistoryScreen(vehicleId: vehicleId),
                               transition: Transition.rightToLeft,
                             ),
                             child: Text(
@@ -205,18 +205,26 @@ class VehicleDetailsScreen extends StatelessWidget {
                     const SizedBox(height: 16),
 
                     // Recent Trips List (Top 2)
-                    if (isLoading)
-                      Column(
-                        children: const [
-                          Skeleton(height: 80, borderRadius: 20),
-                          SizedBox(height: 12),
-                          Skeleton(height: 80, borderRadius: 20),
-                        ],
-                      )
-                    else if (vehicle?.recentTrips == null || vehicle!.recentTrips!.isEmpty)
-                      _buildEmptyTrips()
-                    else
-                      ...vehicle.recentTrips!.take(2).map((trip) => _TripCard(trip: trip)),
+                    Obx(() {
+                      final v = controller.vehicle.value;
+                      if (isLoading) {
+                        return Column(
+                          children: const [
+                            Skeleton(height: 80, borderRadius: 20),
+                            SizedBox(height: 12),
+                            Skeleton(height: 80, borderRadius: 20),
+                          ],
+                        );
+                      }
+                      
+                      if (v?.recentTrips == null || v!.recentTrips!.isEmpty) {
+                        return const _EmptyTripsPlaceholder();
+                      }
+                      
+                      return Column(
+                        children: v.recentTrips!.take(2).map((trip) => _TripCard(trip: trip)).toList(),
+                      );
+                    }),
 
                     const SizedBox(height: 100),
                   ],
@@ -266,45 +274,6 @@ class VehicleDetailsScreen extends StatelessWidget {
           ],
         );
       }),
-    );
-  }
-
-  Widget _buildEmptyTrips({String message = 'No recent trips recorded'}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-      decoration: BoxDecoration(
-        color: AppColors.purple.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.purple.withOpacity(0.15), width: 1.5),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.purple.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.history_rounded,
-              color: AppColors.purple,
-              size: 32,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.purple,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -459,7 +428,9 @@ class _TripCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      trip.endLocation.displayName,
+                      trip.status == 'ONGOING' 
+                        ? 'Ongoing...' 
+                        : trip.endLocation.displayName,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -478,15 +449,19 @@ class _TripCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.green.withOpacity(0.1),
+                      color: trip.status == 'ONGOING'
+                        ? AppColors.purple.withOpacity(0.1)
+                        : AppColors.green.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '${trip.distance.toStringAsFixed(1)} KM',
+                      trip.status == 'ONGOING' 
+                        ? 'Ongoing'
+                        : '${trip.distance.toStringAsFixed(1)} KM',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.green,
+                        color: trip.status == 'ONGOING' ? AppColors.purple : AppColors.green,
                       ),
                     ),
                   ),
@@ -500,7 +475,9 @@ class _TripCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    _formatDuration(trip.duration),
+                    trip.status == 'ONGOING'
+                      ? 'Ongoing'
+                      : _formatDuration(trip.duration),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
@@ -561,18 +538,25 @@ class _TripCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class TripHistoryScreen extends StatefulWidget {
-  final VehicleModel vehicle;
-  const TripHistoryScreen({super.key, required this.vehicle});
+  final String vehicleId;
+  const TripHistoryScreen({super.key, required this.vehicleId});
 
   @override
   State<TripHistoryScreen> createState() => _TripHistoryScreenState();
 }
 
 class _TripHistoryScreenState extends State<TripHistoryScreen> {
+  late final VehicleDetailsController _controller;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isNewestFirst = true;
   DateTime? _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = Get.find<VehicleDetailsController>(tag: widget.vehicleId);
+  }
 
   @override
   void dispose() {
@@ -581,7 +565,8 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
   }
 
   List<RecentTrip> get _filteredTrips {
-    final trips = List<RecentTrip>.from(widget.vehicle.recentTrips ?? []);
+    final vehicle = _controller.vehicle.value;
+    final trips = List<RecentTrip>.from(vehicle?.recentTrips ?? []);
     
     // Sort
     trips.sort((a, b) {
@@ -675,10 +660,6 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filteredTrips;
-    final recentTrips = filtered.take(2).toList();
-    final pastTrips = filtered.length > 2 ? filtered.sublist(2) : <RecentTrip>[];
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -835,32 +816,37 @@ class _TripHistoryScreenState extends State<TripHistoryScreen> {
             ),
           ),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              children: [
-                if (filtered.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 40),
-                    child: VehicleDetailsScreen(vehicleId: '', vehicleImage: '')._buildEmptyTrips(
-                      message: _selectedDate != null 
-                        ? 'No trips found for ${DateFormat('MMM dd').format(_selectedDate!)}'
-                        : 'No trips match your search'
-                    ),
-                  )
-                else ...[
-                  if (recentTrips.isNotEmpty) ...[
-                    _buildSectionHeader('Recent Trips', Icons.history_rounded),
-                    ...recentTrips.map((trip) => _TripCard(trip: trip)),
+            child: Obx(() {
+              final filtered = _filteredTrips;
+
+              return ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                children: [
+                  if (filtered.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 40),
+                      child: _EmptyTripsPlaceholder(
+                        message: _selectedDate != null 
+                          ? 'No trips found for ${DateFormat('MMM dd').format(_selectedDate!)}'
+                          : 'No trips match your search'
+                      ),
+                    )
+                  else ...[
+                    if (filtered.length > 2) ...[
+                      _buildSectionHeader('Recent Trips', Icons.history_rounded),
+                      ...filtered.take(2).map((trip) => _TripCard(trip: trip)),
+                      const SizedBox(height: 12),
+                      _buildSectionHeader('Past Trips', Icons.restore_rounded),
+                      ...filtered.skip(2).map((trip) => _TripCard(trip: trip)),
+                    ] else ...[
+                      _buildSectionHeader('Recent Trips', Icons.history_rounded),
+                      ...filtered.map((trip) => _TripCard(trip: trip)),
+                    ],
                   ],
-                  if (pastTrips.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    _buildSectionHeader('Past Trips', Icons.restore_rounded),
-                    ...pastTrips.map((trip) => _TripCard(trip: trip)),
-                  ],
+                  const SizedBox(height: 40),
                 ],
-                const SizedBox(height: 40),
-              ],
-            ),
+              );
+            }),
           ),
         ],
       ),
@@ -943,6 +929,51 @@ class _SortOption extends StatelessWidget {
               const Icon(Icons.check_circle_rounded, color: AppColors.purple, size: 24),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _EmptyTripsPlaceholder extends StatelessWidget {
+  final String message;
+  const _EmptyTripsPlaceholder({this.message = 'No recent trips recorded'});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+      decoration: BoxDecoration(
+        color: AppColors.purple.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.purple.withOpacity(0.15), width: 1.5),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.purple.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.history_rounded,
+              color: AppColors.purple,
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.purple,
+            ),
+          ),
+        ],
       ),
     );
   }

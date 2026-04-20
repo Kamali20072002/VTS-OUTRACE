@@ -378,7 +378,6 @@ class MapMarkerHelper {
       0.45 + ((zoom.clamp(8.0, 20.0) - 8.0) / 12.0) * 0.65;
 
   static Color _baseColor(String type, bool isOnline) {
-    if (!isOnline) return const Color(0xFF9E9E9E); // Grey for offline
     switch (type.toLowerCase()) {
       case 'truck':      return const Color(0xFF2196F3);
       case 'bike':
